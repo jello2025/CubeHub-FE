@@ -5,6 +5,7 @@ interface UserInfo {
   username: string;
   password: string;
   email: string;
+  image: string;
 }
 
 const login = async (userInfo: UserInfo) => {
