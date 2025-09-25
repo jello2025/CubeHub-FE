@@ -176,7 +176,7 @@ const Register = () => {
                   <TouchableOpacity
                     style={[styles.button, isPending && styles.buttonDisabled]}
                     onPress={() => {
-                      handleSubmit(), router.push("/profilePage");
+                      handleSubmit(), router.push("/");
                     }}
                     disabled={isPending}
                   >
