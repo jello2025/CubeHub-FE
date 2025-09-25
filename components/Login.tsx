@@ -1,10 +1,9 @@
 import { login } from "@/api/auth";
+import AuthContext from "@/app/AuthContext";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import { Formik } from "formik";
-import React from "react";
-import * as Yup from "yup";
-
-import { router } from "expo-router";
+import React, { useContext } from "react";
 import {
   Alert,
   Image,
@@ -18,18 +17,21 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import * as Yup from "yup";
 
 // Yup validation schema
 const SignupSchema = Yup.object().shape({
   username: Yup.string().required("Required"),
   password: Yup.string().required("Required"),
 });
-
+const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
+const router = useRouter();
 const Register = () => {
   const { mutate, isPending } = useMutation({
     mutationKey: ["login"],
     mutationFn: login,
     onSuccess: (data) => {
+      setIsAuthenticated(true);
       console.log("Logged in successfully", data);
     },
     onError: (err: any) => {
