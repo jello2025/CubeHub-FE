@@ -94,6 +94,10 @@ const Register = () => {
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={{ flex: 1, justifyContent: "center" }}>
                 <View style={styles.formContainer}>
+                  <Image
+                    source={require("@/assets/images/cubehub-logo.png")}
+                    style={{ height: 170, width: 170 }}
+                  />
                   {/* Profile image / picker */}
                   {userImage ? (
                     <TouchableOpacity onPress={pickImage}>
@@ -171,7 +175,9 @@ const Register = () => {
                   {/* Submit Button */}
                   <TouchableOpacity
                     style={[styles.button, isPending && styles.buttonDisabled]}
-                    onPress={() => handleSubmit()}
+                    onPress={() => {
+                      handleSubmit(), router.push("/");
+                    }}
                     disabled={isPending}
                   >
                     <Text style={styles.buttonText}>
@@ -211,7 +217,7 @@ const styles = StyleSheet.create({
     width: 370,
     alignSelf: "center",
     padding: 20,
-    marginTop: 40,
+    marginTop: 20,
     alignItems: "center",
   },
   label: {
@@ -226,13 +232,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 16,
     backgroundColor: "#fff",
-    marginBottom: 25,
+    marginBottom: 10,
   },
   image: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 30,
+    marginBottom: 10,
   },
   circle: {
     width: 100,
@@ -242,7 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
-    marginBottom: 30,
+    marginBottom: 10,
   },
   plusIcon: {
     position: "absolute",
