@@ -7,6 +7,7 @@ import * as Yup from "yup";
 import { router } from "expo-router";
 import {
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -67,7 +68,11 @@ const Register = () => {
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={{ flex: 1, justifyContent: "center" }}>
                 <View style={styles.formContainer}>
-                  <Text
+                  <Image
+                    source={require("@/assets/images/cubehub-logo.png")}
+                    style={{ height: 200, width: 200, marginBottom: 100 }}
+                  />
+                  {/* <Text
                     style={{
                       fontSize: 35,
                       marginBottom: 100,
@@ -75,7 +80,7 @@ const Register = () => {
                     }}
                   >
                     Welcome back!
-                  </Text>
+                  </Text> */}
                   {/* Username */}
                   <Text style={styles.label}>Username</Text>
                   <TextInput
@@ -108,7 +113,9 @@ const Register = () => {
                   {/* Submit Button */}
                   <TouchableOpacity
                     style={[styles.button, isPending && styles.buttonDisabled]}
-                    onPress={() => handleSubmit()}
+                    onPress={() => {
+                      handleSubmit(), router.push("/profilePage");
+                    }}
                     disabled={isPending}
                   >
                     <Text style={styles.buttonText}>
