@@ -1,9 +1,9 @@
-import Register from "@/components/Register";
+import Login from "@/components/Login";
 import { View } from "react-native";
 export default function Index() {
   return (
     <View>
-      <Register />
+      <Login />
     </View>
   );
 }

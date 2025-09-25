@@ -1,15 +1,12 @@
-import { register } from "@/api/auth";
-import { Ionicons } from "@expo/vector-icons";
+import { login } from "@/api/auth";
 import { useMutation } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
 import { Formik } from "formik";
-import React, { useState } from "react";
+import React from "react";
 import * as Yup from "yup";
 
 import { router } from "expo-router";
 import {
   Alert,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -24,23 +21,15 @@ import {
 // Yup validation schema
 const SignupSchema = Yup.object().shape({
   username: Yup.string().required("Required"),
-  email: Yup.string().email("Invalid email").required("Required"),
-  password: Yup.string()
-    .min(8, "Password must be at least 8 characters")
-    .required("Required"),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password")], "Passwords must match")
-    .required("Required"),
+  password: Yup.string().required("Required"),
 });
 
 const Register = () => {
-  const [userImage, setUserImage] = useState<string>("");
-
   const { mutate, isPending } = useMutation({
-    mutationKey: ["register"],
-    mutationFn: register,
+    mutationKey: ["login"],
+    mutationFn: login,
     onSuccess: (data) => {
-      console.log("Registered successfully", data);
+      console.log("Logged in successfully", data);
     },
     onError: (err: any) => {
       Alert.alert(
@@ -50,31 +39,15 @@ const Register = () => {
     },
   });
 
-  const pickImage = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [3, 3],
-      quality: 1,
-    });
-
-    if (!res.canceled) {
-      const pic: string = res.assets[0].uri;
-      setUserImage(pic);
-    }
-  };
-
   return (
     <Formik
       initialValues={{
         username: "",
-        email: "",
         password: "",
-        confirmPassword: "",
       }}
       validationSchema={SignupSchema}
       onSubmit={(values) => {
-        const payload = { ...values, image: userImage };
+        const payload = { ...values };
         mutate(payload);
       }}
     >
@@ -94,20 +67,15 @@ const Register = () => {
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={{ flex: 1, justifyContent: "center" }}>
                 <View style={styles.formContainer}>
-                  {/* Profile image / picker */}
-                  {userImage ? (
-                    <TouchableOpacity onPress={pickImage}>
-                      <Image source={{ uri: userImage }} style={styles.image} />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity onPress={pickImage} style={styles.circle}>
-                      <Ionicons name="camera-outline" size={28} color="#666" />
-                      <View style={styles.plusIcon}>
-                        <Ionicons name="add" size={16} color="#fff" />
-                      </View>
-                    </TouchableOpacity>
-                  )}
-
+                  <Text
+                    style={{
+                      fontSize: 35,
+                      marginBottom: 100,
+                      color: "#333",
+                    }}
+                  >
+                    Welcome back!
+                  </Text>
                   {/* Username */}
                   <Text style={styles.label}>Username</Text>
                   <TextInput
@@ -122,25 +90,11 @@ const Register = () => {
                     <Text style={styles.errorText}>{errors.username}</Text>
                   )}
 
-                  {/* Email */}
-                  <Text style={styles.label}>Email</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your email"
-                    autoCapitalize="none"
-                    value={values.email}
-                    onChangeText={handleChange("email")}
-                    onBlur={handleBlur("email")}
-                  />
-                  {errors.email && touched.email && (
-                    <Text style={styles.errorText}>{errors.email}</Text>
-                  )}
-
                   {/* Password */}
                   <Text style={styles.label}>Password</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Create password"
+                    placeholder="Enter your password"
                     secureTextEntry
                     autoCapitalize="none"
                     value={values.password}
@@ -151,23 +105,6 @@ const Register = () => {
                     <Text style={styles.errorText}>{errors.password}</Text>
                   )}
 
-                  {/* Confirm Password */}
-                  <Text style={styles.label}>Confirm Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Confirm your password"
-                    secureTextEntry
-                    autoCapitalize="none"
-                    value={values.confirmPassword}
-                    onChangeText={handleChange("confirmPassword")}
-                    onBlur={handleBlur("confirmPassword")}
-                  />
-                  {errors.confirmPassword && touched.confirmPassword && (
-                    <Text style={styles.errorText}>
-                      {errors.confirmPassword}
-                    </Text>
-                  )}
-
                   {/* Submit Button */}
                   <TouchableOpacity
                     style={[styles.button, isPending && styles.buttonDisabled]}
@@ -175,16 +112,16 @@ const Register = () => {
                     disabled={isPending}
                   >
                     <Text style={styles.buttonText}>
-                      {isPending ? "Creating account..." : "Create Account"}
+                      {isPending ? "Loggin in..." : "Log in"}
                     </Text>
                   </TouchableOpacity>
                   <View style={{ flexDirection: "row", gap: 5, marginTop: 15 }}>
-                    <Text style={{ fontSize: 16 }}>
-                      Already have an account?
-                    </Text>
-                    <TouchableOpacity onPress={() => router.push("/loginPage")}>
+                    <Text style={{ fontSize: 16 }}>Don't have an account?</Text>
+                    <TouchableOpacity
+                      onPress={() => router.push("/registerPage")}
+                    >
                       <Text style={{ fontSize: 16, color: "#2563EB" }}>
-                        Log in
+                        Register
                       </Text>
                     </TouchableOpacity>
                   </View>

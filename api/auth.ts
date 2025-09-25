@@ -8,11 +8,13 @@ interface UserInfo {
   image: string;
 }
 
-const login = async (userInfo: UserInfo) => {
-  const { data } = await instance.post(
-    "/mini-project/api/auth/login",
-    userInfo
-  );
+interface Login {
+  username: string;
+  password: string;
+}
+
+const login = async (userInfo: Login) => {
+  const { data } = await instance.post("/auth/login", userInfo);
   console.log(data.token);
   await storeToken(data.token);
 
