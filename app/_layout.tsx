@@ -1,17 +1,24 @@
-import { getToken } from "@/api/storage";
+import { deleteToken, getToken } from "@/api/storage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import AuthContext from "./AuthContext";
+
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
+  const handleLogout = async () => {
+    await deleteToken();
+    setIsAuthenticated(false);
+    router.replace("/loginPage");
+  };
+
   useEffect(() => {
     const checkToken = async () => {
       const token = await getToken();
-      setIsAuthenticated(token ? true : false);
+      setIsAuthenticated(!!token);
       setIsReady(true);
     };
     checkToken();
@@ -26,28 +33,30 @@ export default function RootLayout() {
   }
 
   const queryClient = new QueryClient();
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
         <Stack>
-          <Stack.Screen
-            name="index"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="registerPage"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="loginPage"
-            options={{
-              headerShown: false,
-            }}
-          />
+          {/* Public Screens */}
+          {!isAuthenticated && (
+            <>
+              <Stack.Screen name="loginPage" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="registerPage"
+                options={{ headerShown: false }}
+              />
+            </>
+          )}
+
+          {/* Protected Screens */}
+          <Stack.Protected guard={isAuthenticated}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="(protected)/(tabs)"
+              options={{ headerShown: false }}
+            />
+          </Stack.Protected>
         </Stack>
       </AuthContext.Provider>
     </QueryClientProvider>

@@ -24,15 +24,17 @@ const SignupSchema = Yup.object().shape({
   username: Yup.string().required("Required"),
   password: Yup.string().required("Required"),
 });
-const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
-const router = useRouter();
-const Register = () => {
+
+const Login = () => {
+  const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
+  const router = useRouter();
+
   const { mutate, isPending } = useMutation({
     mutationKey: ["login"],
     mutationFn: login,
     onSuccess: (data) => {
-      setIsAuthenticated(true);
-      console.log("Logged in successfully", data);
+      setIsAuthenticated(true); // ✅ set auth state
+      router.replace("/(protected)/(tabs)/profilePage"); // ✅ navigate after login
     },
     onError: (err: any) => {
       Alert.alert(
@@ -44,14 +46,10 @@ const Register = () => {
 
   return (
     <Formik
-      initialValues={{
-        username: "",
-        password: "",
-      }}
+      initialValues={{ username: "", password: "" }}
       validationSchema={SignupSchema}
       onSubmit={(values) => {
-        const payload = { ...values };
-        mutate(payload);
+        mutate(values); // send login request
       }}
     >
       {({
@@ -74,15 +72,7 @@ const Register = () => {
                     source={require("@/assets/images/cubehub-logo.png")}
                     style={{ height: 200, width: 200, marginBottom: 100 }}
                   />
-                  {/* <Text
-                    style={{
-                      fontSize: 35,
-                      marginBottom: 100,
-                      color: "#333",
-                    }}
-                  >
-                    Welcome back!
-                  </Text> */}
+
                   {/* Username */}
                   <Text style={styles.label}>Username</Text>
                   <TextInput
@@ -115,15 +105,14 @@ const Register = () => {
                   {/* Submit Button */}
                   <TouchableOpacity
                     style={[styles.button, isPending && styles.buttonDisabled]}
-                    onPress={() => {
-                      handleSubmit(), router.push("/profilePage");
-                    }}
+                    onPress={() => handleSubmit()}
                     disabled={isPending}
                   >
                     <Text style={styles.buttonText}>
-                      {isPending ? "Loggin in..." : "Log in"}
+                      {isPending ? "Logging in..." : "Log in"}
                     </Text>
                   </TouchableOpacity>
+
                   <View style={{ flexDirection: "row", gap: 5, marginTop: 15 }}>
                     <Text style={{ fontSize: 16 }}>Don't have an account?</Text>
                     <TouchableOpacity
@@ -144,7 +133,7 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;
 
 const styles = StyleSheet.create({
   container: {
@@ -174,33 +163,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginBottom: 25,
   },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 30,
-  },
-  circle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-    marginBottom: 30,
-  },
-  plusIcon: {
-    position: "absolute",
-    bottom: 4,
-    right: 4,
-    backgroundColor: "#2563EB",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   button: {
     backgroundColor: "#2563EB",
     paddingVertical: 14,
@@ -214,17 +176,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  buttonDisabled: {
-    backgroundColor: "#A5B4FC",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  errorText: {
-    color: "red",
-    marginBottom: 10,
-    alignSelf: "flex-start",
-  },
+  buttonDisabled: { backgroundColor: "#A5B4FC" },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  errorText: { color: "red", marginBottom: 10, alignSelf: "flex-start" },
 });
