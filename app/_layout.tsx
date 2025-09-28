@@ -48,13 +48,15 @@ export default function RootLayout() {
               />
             </>
           )}
-
+          <Stack.Screen name="loginPage" options={{ headerShown: false }} />
+          <Stack.Screen name="registerPage" options={{ headerShown: false }} />
           {/* Protected Screens */}
           <Stack.Protected guard={isAuthenticated}>
             <Stack.Screen
               name="(protected)/(tabs)"
               options={{ headerShown: false }}
             />
+            <Stack.Screen name="(protected)" options={{ headerShown: false }} />
             {/* <Stack.Screen name="(protected)" options={{ headerShown: false }} /> */}
           </Stack.Protected>
         </Stack>

@@ -10,7 +10,12 @@ const ProtectedLayout = () => {
   }
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)/profilePage" />
+      <Stack.Screen
+        name="(tabs)/profilePage"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 };

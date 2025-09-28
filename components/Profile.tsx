@@ -1,26 +1,48 @@
 import { getMyProfile } from "@/api/auth";
+import AuthContext from "@/context/AuthContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-
+import { router } from "expo-router";
+import React, { useContext } from "react";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 const Profile = () => {
+  const { setIsAuthenticated } = useContext(AuthContext);
+  const handleSignout = async () => {
+    await setIsAuthenticated(false);
+    router.replace("/loginPage");
+  };
+
   const { data, isFetching, isSuccess } = useQuery({
     queryKey: ["User"],
     queryFn: getMyProfile,
   });
   console.log(data);
   if (isFetching) return <Text>Loading...</Text>;
+  console.log(data?.image);
 
   return (
     <ScrollView style={{ backgroundColor: "#c5eaf4ff", height: "100%" }}>
       <View style={styles.userInfo}>
         <Image
-          source={require("@/assets/images/cubehub-logo.png")}
+          source={
+            data?.image
+              ? { uri: `http://localhost:8000/${data.image}` }
+              : require("@/assets/images/cubehub-logo.png")
+          }
           style={styles.pfp}
         />
         <Text style={styles.username}>@{data?.username}</Text>
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignout}>
+          <Text style={styles.signOutButtonText}>Sign out</Text>
+        </TouchableOpacity>
       </View>
       <LinearGradient
         colors={["#2563EB", "#7cd4faff"]}
@@ -155,5 +177,25 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     margin: 5,
+  },
+  signOutButton: {
+    backgroundColor: "#ff6565ff", // a nice red
+    paddingVertical: 14,
+    paddingHorizontal: 50,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  signOutButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
