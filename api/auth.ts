@@ -13,6 +13,12 @@ interface Login {
   password: string;
 }
 
+export interface IClass {
+  _id: string;
+  username: string;
+  image: string;
+}
+
 const login = async (userInfo: Login) => {
   const { data } = await instance.post("/auth/login", userInfo);
   console.log(data.token);
@@ -27,4 +33,10 @@ const register = async (userInfo: UserInfo) => {
   return data;
 };
 
-export { login, register };
+const getMyProfile = async (): Promise<IClass> => {
+  const res = await instance.get("/auth/myProfile");
+  const data = res.data;
+  return data;
+};
+
+export { getMyProfile, login, register };

@@ -1,5 +1,5 @@
 import { login } from "@/api/auth";
-import AuthContext from "@/app/AuthContext";
+import AuthContext from "@/context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";

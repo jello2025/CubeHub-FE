@@ -41,6 +41,7 @@ const Register = () => {
     mutationFn: register,
     onSuccess: (data) => {
       console.log("Registered successfully", data);
+      router.replace("/(protected)/(tabs)/profilePage");
     },
     onError: (err: any) => {
       Alert.alert(

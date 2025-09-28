@@ -1,7 +1,7 @@
 import { Redirect, Stack } from "expo-router";
 import React, { useContext } from "react";
 import { StyleSheet } from "react-native";
-import AuthContext from "../AuthContext";
+import AuthContext from "../../context/AuthContext";
 
 const ProtectedLayout = () => {
   const { isAuthenticated } = useContext(AuthContext);
