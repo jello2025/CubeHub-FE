@@ -25,6 +25,9 @@ import * as Yup from "yup";
 // Yup validation schema
 const SignupSchema = Yup.object().shape({
   username: Yup.string().required("Required"),
+  ao5: Yup.number().required("Required"),
+  ao12: Yup.number().required("Required"),
+  single: Yup.number().required("Required"),
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
@@ -34,16 +37,16 @@ const SignupSchema = Yup.object().shape({
     .required("Required"),
 });
 interface UserInfo {
-  ao5: string;
-  ao12: string;
-  single: string;
+  ao5: number;
+  ao12: number;
+  single: number;
 }
 const Register = () => {
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    ao5: "",
-    ao12: "",
-    single: "",
-  });
+  // const [userInfo, setUserInfo] = useState<UserInfo>({
+  //   ao5: 0,
+  //   ao12: 0,
+  //   single: 0,
+  // });
   const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const router = useRouter();
   const [userImage, setUserImage] = useState<string>("");
@@ -54,7 +57,7 @@ const Register = () => {
     onSuccess: (data) => {
       console.log("Registered successfully", data);
       setIsAuthenticated(true);
-      router.push("/statsPage");
+      router.push("/(protected)/(tabs)/profilePage");
     },
     onError: (err: any) => {
       Alert.alert(
@@ -85,10 +88,13 @@ const Register = () => {
         email: "",
         password: "",
         confirmPassword: "",
+        ao12: 0,
+        ao5: 0,
+        single: 0,
       }}
       validationSchema={SignupSchema}
       onSubmit={(values) => {
-        const payload = { ...values, image: userImage, ...userInfo };
+        const payload = { ...values, image: userImage };
         mutate(payload);
       }}
     >
@@ -215,20 +221,20 @@ const Register = () => {
                       <Text style={styles.label}>Average of 5</Text>
                       <TextInput
                         style={styles.input}
-                        onChangeText={(text) =>
-                          setUserInfo({ ...userInfo, ao5: text })
-                        }
                         placeholder="Ao5"
                         keyboardType="numeric"
+                        autoCapitalize="none"
+                        onChangeText={handleChange("ao5")}
+                        onBlur={handleBlur("ao5")}
                       />
 
                       <Text style={styles.label}>Average of 12</Text>
                       <TextInput
                         style={styles.input}
                         placeholder="Ao12"
-                        onChangeText={(text) =>
-                          setUserInfo({ ...userInfo, ao12: text })
-                        }
+                        autoCapitalize="none"
+                        onChangeText={handleChange("ao12")}
+                        onBlur={handleBlur("ao12")}
                         keyboardType="numeric"
                       />
 
@@ -236,9 +242,9 @@ const Register = () => {
                       <TextInput
                         style={styles.input}
                         placeholder="Single"
-                        onChangeText={(text) =>
-                          setUserInfo({ ...userInfo, single: text })
-                        }
+                        autoCapitalize="none"
+                        onChangeText={handleChange("single")}
+                        onBlur={handleBlur("single")}
                         keyboardType="numeric"
                       />
 
@@ -256,7 +262,13 @@ const Register = () => {
                       </TouchableOpacity>
 
                       <View
-                        style={{ flexDirection: "row", gap: 5, marginTop: 15 }}
+                        style={{
+                          flexDirection: "row",
+                          gap: 5,
+                          marginTop: 15,
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
                       >
                         <Text style={{ fontSize: 16, textAlign: "center" }}>
                           Already have an account?

@@ -6,6 +6,9 @@ interface UserInfo {
   password: string;
   email: string;
   image: string;
+  ao12: number;
+  ao5: number;
+  single: number;
 }
 
 interface Login {
@@ -17,6 +20,9 @@ export interface IClass {
   _id: string;
   username: string;
   image: string;
+  ao12: number;
+  ao5: number;
+  single: number;
 }
 
 const login = async (userInfo: Login) => {

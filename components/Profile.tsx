@@ -28,7 +28,7 @@ const Profile = () => {
   });
   console.log(data);
   if (isFetching) return <Text>Loading...</Text>;
-  console.log(data?.image);
+  console.log(data?.ao12);
 
   return (
     <ScrollView style={{ backgroundColor: "#c5eaf4ff", height: "100%" }}>
@@ -60,17 +60,17 @@ const Profile = () => {
         <View style={{ flexDirection: "row" }}>
           {/* ao5 */}
           <View style={styles.statsBox}>
-            <Text style={styles.numberText}>9.23s</Text>
+            <Text style={styles.numberText}>{data?.ao5}</Text>
             <Text style={styles.numberTextSmall}>Ao5</Text>
           </View>
           {/* ao12 */}
           <View style={styles.statsBox}>
-            <Text style={styles.numberText}>9.67s</Text>
+            <Text style={styles.numberText}>{data?.ao12}</Text>
             <Text style={styles.numberTextSmall}>Ao12</Text>
           </View>
           {/* single */}
           <View style={styles.statsBox}>
-            <Text style={styles.numberText}>7.21s</Text>
+            <Text style={styles.numberText}>{data?.single}</Text>
             <Text style={styles.numberTextSmall}>Single</Text>
           </View>
         </View>
