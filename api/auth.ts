@@ -50,4 +50,10 @@ const updateUserById = async (userId: string) => {
   return res;
 };
 
-export { getMyProfile, login, register, updateUserById };
+const getAllUsers = async (): Promise<IClass[]> => {
+  const res = await instance.get("auth/getAll");
+  const data = res.data;
+  return data;
+};
+
+export { getAllUsers, getMyProfile, login, register, updateUserById };

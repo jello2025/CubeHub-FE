@@ -117,10 +117,10 @@ const Register = () => {
                 {/* Top section */}
                 <View style={{ flex: 1, justifyContent: "center" }}>
                   <View style={styles.formContainer}>
-                    <Image
+                    {/* <Image
                       source={require("@/assets/images/cubehub-logo.png")}
                       style={{ height: 170, width: 170, marginTop: 40 }}
-                    />
+                    /> */}
                     {/* Profile image / picker */}
                     {userImage ? (
                       <TouchableOpacity onPress={pickImage}>
@@ -328,6 +328,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     marginBottom: 10,
+    marginTop: 30,
   },
   circle: {
     width: 100,
@@ -338,6 +339,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
     marginBottom: 10,
+    marginTop: 70,
   },
   plusIcon: {
     position: "absolute",
