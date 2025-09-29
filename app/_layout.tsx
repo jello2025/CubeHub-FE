@@ -50,6 +50,7 @@ export default function RootLayout() {
           )}
           <Stack.Screen name="loginPage" options={{ headerShown: false }} />
           <Stack.Screen name="registerPage" options={{ headerShown: false }} />
+          <Stack.Screen name="statsPage" options={{ headerShown: false }} />
           {/* Protected Screens */}
           <Stack.Protected guard={isAuthenticated}>
             <Stack.Screen

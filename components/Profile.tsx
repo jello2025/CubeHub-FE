@@ -1,4 +1,5 @@
 import { getMyProfile } from "@/api/auth";
+import { deleteToken } from "@/api/storage";
 import AuthContext from "@/context/AuthContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ const Profile = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
   const handleSignout = async () => {
     await setIsAuthenticated(false);
+    deleteToken();
     router.replace("/loginPage");
   };
 
@@ -98,8 +100,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   pfp: {
-    height: 120,
-    width: 120,
+    height: 130,
+    width: 130,
     padding: 20,
     borderRadius: 70,
     borderWidth: 4,

@@ -39,4 +39,9 @@ const getMyProfile = async (): Promise<IClass> => {
   return data;
 };
 
-export { getMyProfile, login, register };
+const updateUserById = async (userId: string) => {
+  const res = instance.put(`auth/${userId}`);
+  return res;
+};
+
+export { getMyProfile, login, register, updateUserById };
