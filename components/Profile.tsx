@@ -28,10 +28,10 @@ const Profile = () => {
   });
   console.log(data);
   if (isFetching) return <Text>Loading...</Text>;
-  console.log(data?.ao12);
+  console.log(data?.image);
 
   return (
-    <ScrollView style={{ backgroundColor: "#c5eaf4ff", height: "100%" }}>
+    <ScrollView style={{ backgroundColor: "#E6F0FF", height: "100%" }}>
       <View style={styles.userInfo}>
         <Image
           source={

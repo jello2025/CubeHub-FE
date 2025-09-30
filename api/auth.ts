@@ -56,4 +56,17 @@ const getAllUsers = async (): Promise<IClass[]> => {
   return data;
 };
 
-export { getAllUsers, getMyProfile, login, register, updateUserById };
+const getScramble = async () => {
+  const res = await instance.get("ai/scramble");
+  const data = res.data;
+  return data;
+};
+
+export {
+  getAllUsers,
+  getMyProfile,
+  getScramble,
+  login,
+  register,
+  updateUserById,
+};

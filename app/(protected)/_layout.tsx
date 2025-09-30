@@ -1,4 +1,5 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Redirect, Tabs } from "expo-router";
 import React, { useContext } from "react";
 import { StyleSheet } from "react-native";
@@ -39,6 +40,16 @@ const ProtectedLayout = () => {
           title: "profile",
           headerShown: false,
           href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="(tabs)/timerPage"
+        options={{
+          title: "Challenge",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cube-sharp" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
