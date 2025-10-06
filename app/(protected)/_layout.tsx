@@ -1,4 +1,5 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Redirect, Tabs } from "expo-router";
 import React, { useContext } from "react";
@@ -49,6 +50,16 @@ const ProtectedLayout = () => {
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cube-sharp" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(tabs)/leaderboard"
+        options={{
+          title: "leader board",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome5 name="trophy" size={size} color={color} />
           ),
         }}
       />

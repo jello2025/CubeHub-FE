@@ -7,6 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useContext } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
@@ -27,7 +28,29 @@ const Profile = () => {
     queryFn: getMyProfile,
   });
   console.log(data);
-  if (isFetching) return <Text>Loading...</Text>;
+  // if (isFetching) return <Text>Loading...</Text>;
+
+  if (isFetching) return;
+
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "#F5F7FA",
+    }}
+  >
+    <ActivityIndicator size="large" color="#4A90E2" />
+    <Text
+      style={{
+        marginTop: 20,
+        fontSize: 16,
+        color: "#333",
+      }}
+    >
+      Loading, please wait...
+    </Text>
+  </View>;
   console.log(data?.image);
 
   return (
