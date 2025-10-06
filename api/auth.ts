@@ -57,7 +57,7 @@ const getAllUsers = async (): Promise<IClass[]> => {
 };
 
 const getScramble = async () => {
-  const res = await instance.get("ai/scramble");
+  const res = await instance.get("scramble/daily");
   const data = res.data;
   return data;
 };

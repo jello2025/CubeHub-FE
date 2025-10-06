@@ -15,7 +15,6 @@ const Timer = () => {
     queryKey: ["Scramble"],
     queryFn: getScramble,
   });
-
   const today = new Date();
   const options = { year: "numeric", month: "long", day: "numeric" } as const;
   const formattedDate = today.toLocaleDateString("en-US", options);
@@ -53,7 +52,7 @@ const Timer = () => {
   }, [isRunning, startTime]);
 
   const seconds = Math.floor(elapsedTime / 1000);
-  const ms = Math.floor((elapsedTime % 1000) / 10); // two digits for ms
+  const ms = Math.floor((elapsedTime % 1000) / 10);
 
   return (
     <View style={styles.wrapper}>
@@ -130,7 +129,7 @@ const styles = StyleSheet.create({
     height: "40%",
   },
   timerText: {
-    fontSize: 100,
+    fontSize: 80,
     fontWeight: "600",
     color: "#455c8fff",
   },

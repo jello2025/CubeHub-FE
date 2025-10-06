@@ -42,11 +42,6 @@ interface UserInfo {
   single: number;
 }
 const Register = () => {
-  // const [userInfo, setUserInfo] = useState<UserInfo>({
-  //   ao5: 0,
-  //   ao12: 0,
-  //   single: 0,
-  // });
   const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const router = useRouter();
   const [userImage, setUserImage] = useState<string>("");
@@ -380,7 +375,7 @@ const styles = StyleSheet.create({
   },
   container2: {
     // height: "100%",
-    backgroundColor: "#c5eaf4ff", // your light blue bg
+    backgroundColor: "#E6F0FF", // your light blue bg
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
