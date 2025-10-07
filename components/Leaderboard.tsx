@@ -29,7 +29,7 @@ const Leaderboard = () => {
 
   if (!users || !leaderboardData) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Loading leaderboard...</Text>
       </View>
     );
@@ -38,11 +38,8 @@ const Leaderboard = () => {
   const enrichedLeaderboard: LeaderboardEntry[] =
     leaderboardData.leaderboard.map((item) => {
       const user = users.find((u) => u._id === item.user);
-
-      // normalize time: if time is huge, assume milliseconds
       let timeNum = Number(item.time ?? 0);
       if (timeNum > 100) timeNum = timeNum / 1000;
-
       return {
         username: user?.username ?? "Unknown",
         image: user?.image,
@@ -52,33 +49,39 @@ const Leaderboard = () => {
     });
 
   const sortedLeaderboard = enrichedLeaderboard.sort((a, b) => a.time - b.time);
-
   const top3 = sortedLeaderboard.slice(0, 3);
   const rest = sortedLeaderboard.slice(3);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Today's Leaderboard</Text>
 
-      {/* 🏆 Top 3 Podium */}
-      <View style={styles.podiumContainer}>
+      {/* 🏆 Top 3 Podiums */}
+      <View style={styles.podiumWrapper}>
         {top3.map((item, index) => {
-          const medals = ["🥇", "🥈", "🥉"];
+          const heights = [120, 100, 80]; // first is tallest
+          const crown = index === 0 ? "👑" : null;
+          const colors = ["#FFD700", "#C0C0C0", "#CD7F32"];
           return (
-            <View
-              key={item.userId}
-              style={[styles.podiumCard, (styles as any)[`podium${index + 1}`]]}
-            >
-              <Text style={styles.medal}>{medals[index]}</Text>
-              {item.image && (
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.podiumAvatar}
-                />
-              )}
+            <View key={item.userId} style={styles.podiumColumn}>
+              <View
+                style={[
+                  styles.podiumCircle,
+                  {
+                    height: heights[index],
+                    width: heights[index],
+                    backgroundColor: colors[index],
+                  },
+                ]}
+              >
+                {crown && <Text style={styles.crown}>{crown}</Text>}
+                {item.image && (
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.podiumAvatar}
+                  />
+                )}
+              </View>
               <Text style={styles.podiumName}>{item.username}</Text>
               <Text style={styles.podiumTime}>{item.time.toFixed(2)}s</Text>
             </View>
@@ -86,12 +89,7 @@ const Leaderboard = () => {
         })}
       </View>
 
-      {/* ❌ No submissions */}
-      {sortedLeaderboard.length === 0 && (
-        <Text style={styles.noData}>No submissions yet.</Text>
-      )}
-
-      {/* 📋 Rest of leaderboard */}
+      {/* Rest of leaderboard */}
       {rest.map((item, index) => (
         <View key={item.userId} style={styles.card}>
           <Text style={styles.rank}>{index + 4}</Text>
@@ -112,83 +110,69 @@ export default Leaderboard;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#F0F7FF",
+    backgroundColor: "#E0F2FF",
     height: "100%",
     paddingTop: 50,
   },
-  contentContainer: {
+  content: {
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
   title: {
     marginTop: 50,
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "bold",
+    textAlign: "center",
     color: "#2563EB",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  loadingText: {
-    marginTop: 20,
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-  },
-  noData: {
-    textAlign: "center",
-    color: "#888",
-    marginTop: 20,
-    fontSize: 16,
-  },
-  podiumContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
     marginBottom: 30,
   },
-  podiumCard: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    padding: 10,
-    borderRadius: 15,
-    width: 100,
+  },
+  loadingText: { fontSize: 16, color: "#333" },
+  podiumWrapper: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "flex-end",
+    marginBottom: 40,
+  },
+  podiumColumn: {
+    alignItems: "center",
+  },
+  podiumCircle: {
+    borderRadius: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 6,
-    elevation: 4,
-  },
-  podium1: {
-    backgroundColor: "#FFD700",
-    marginTop: 0,
-  },
-  podium2: {
-    backgroundColor: "#C0C0C0",
-    marginTop: 20,
-  },
-  podium3: {
-    backgroundColor: "#CD7F32",
-    marginTop: 40,
-  },
-  medal: {
-    fontSize: 30,
-    marginBottom: 5,
+    elevation: 5,
   },
   podiumAvatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginBottom: 5,
+  },
+  crown: {
+    position: "absolute",
+    top: -20,
+    fontSize: 28,
+    zIndex: 10,
   },
   podiumName: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    textAlign: "center",
-    marginBottom: 5,
+    marginBottom: 2,
   },
   podiumTime: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: "500",
-    color: "white",
+    color: "#2563EB",
   },
   card: {
     flexDirection: "row",

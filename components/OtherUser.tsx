@@ -1,11 +1,14 @@
+import { getUserScrambleHistory } from "@/api/auth";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,11 +16,39 @@ import {
 } from "react-native";
 
 interface OtherUserProps {
-  user: any; // replace with proper type if you have it
+  user: any;
+}
+
+interface ScrambleHistoryItem {
+  scrambleId: string;
+  date: string;
+  time: number;
+  rank: number;
 }
 
 const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
+  const formatTime = (time: number | string) => {
+    let t = Number(time);
+
+    // If time is unusually large (> 1000), assume it's in milliseconds
+    if (t > 1000) t = t / 1000;
+
+    // Round to 2 decimals
+    const rounded = Math.round(t * 100) / 100;
+
+    // Only show decimals if necessary
+    return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+  };
+
   const router = useRouter();
+  const { userId } = useLocalSearchParams<{ userId: string }>();
+
+  // Fetch user's scramble history
+  const { data, isLoading } = useQuery({
+    queryKey: ["scrambleHistory", userId],
+    queryFn: () => getUserScrambleHistory(userId),
+    enabled: !!userId,
+  });
 
   if (!user) {
     return (
@@ -27,8 +58,9 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
     );
   }
 
-  return (
-    <ScrollView style={{ backgroundColor: "#E6F0FF", height: "100%" }}>
+  // FlatList header containing all the content above the scramble history
+  const ListHeader = () => (
+    <>
       {/* Back Button */}
       <TouchableOpacity
         style={styles.backBtn}
@@ -52,9 +84,20 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
           style={styles.pfp}
         />
         <Text style={styles.username}>@{user.username}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 5,
+          }}
+        >
+          <MaterialIcons name="email" size={24} color="gray" />
+          <Text style={{ color: "gray" }}>{user.email}</Text>
+        </View>
       </View>
 
-      {/* Streak / Optional */}
+      {/* Streak */}
       {user.streak && (
         <LinearGradient
           colors={["#2563EB", "#7cd4faff"]}
@@ -85,7 +128,78 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
           </View>
         </View>
       </View>
-    </ScrollView>
+
+      {/* Scramble History Title */}
+      <View style={styles.historyContainer}>
+        <Text style={styles.historyTitle}>Scramble History</Text>
+      </View>
+    </>
+  );
+
+  return isLoading ? (
+    <View style={styles.center}>
+      <ActivityIndicator size="large" color="#2563EB" />
+    </View>
+  ) : data && data.length > 0 ? (
+    <FlatList
+      style={{ backgroundColor: "#E6F0FF", flex: 1 }}
+      data={data}
+      keyExtractor={(item) => item.scrambleId}
+      ListHeaderComponent={ListHeader}
+      contentContainerStyle={{ paddingBottom: 50 }}
+      renderItem={({ item }) => (
+        <View
+          style={[
+            styles.historyCard,
+            { marginHorizontal: 35, marginBottom: 10 },
+          ]}
+        >
+          <Text style={styles.historyDate}>
+            {new Date(item.date).toLocaleDateString()}
+          </Text>
+          <Text style={styles.historyTime}>Time: {formatTime(item.time)}s</Text>
+
+          <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
+        </View>
+      )}
+    />
+  ) : (
+    <View style={{ backgroundColor: "#E6F0FF", flex: 1 }}>
+      <FlatList
+        style={{ backgroundColor: "#E6F0FF", flex: 1 }}
+        data={data || []} // data or empty array
+        keyExtractor={(item) => item.scrambleId}
+        ListHeaderComponent={ListHeader}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        renderItem={({ item }) => (
+          <View
+            style={[
+              styles.historyCard,
+              { marginHorizontal: 35, marginBottom: 10 },
+            ]}
+          >
+            <Text style={styles.historyDate}>
+              {new Date(item.date).toLocaleDateString()}
+            </Text>
+            <Text style={styles.historyTime}>
+              Time:{" "}
+              {Number(item.time) % 1 === 0
+                ? Number(item.time)
+                : Math.round(Number(item.time) * 100) / 100}
+              s
+            </Text>
+            <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text
+            style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
+          >
+            No scramble history yet.
+          </Text>
+        }
+      />
+    </View>
   );
 };
 
@@ -195,5 +309,46 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  historyContainer: {
+    marginTop: 20,
+  },
+  historyTitle: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#2563EB",
+    marginBottom: 10,
+    marginLeft: 30,
+  },
+  historyCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  historyDate: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  historyTime: {
+    fontSize: 14,
+    color: "#2563EB",
+    marginTop: 4,
+  },
+  historyRank: {
+    fontSize: 14,
+    color: "#888",
+    marginTop: 2,
+  },
+  noHistory: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 10,
   },
 });
