@@ -18,17 +18,14 @@ const UsersList = () => {
   });
 
   const [searchText, setSearchText] = useState("");
-  const [minAo5, setMinAo5] = useState<string>("0"); // default min
-  const [maxAo5, setMaxAo5] = useState<string>("9999"); // default max (big)
+  const [minAo5, setMinAo5] = useState<string>("0");
+  const [maxAo5, setMaxAo5] = useState<string>("9999");
 
-  // parsed numeric range
   const minVal = Number(minAo5) || 0;
   const maxVal = Number(maxAo5) || Number.POSITIVE_INFINITY;
 
-  // Filtered + searched users
   const filteredList = useMemo(() => {
     if (!users) return [];
-
     return users
       .filter((user) =>
         user.username.toLowerCase().includes(searchText.toLowerCase())
@@ -44,6 +41,7 @@ const UsersList = () => {
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 40 }}
     >
+      {/* Search Bar */}
       <TextInput
         placeholder="Search username"
         style={styles.searchBar}
@@ -53,23 +51,22 @@ const UsersList = () => {
         autoCorrect={false}
       />
 
-      {/* Range inputs */}
+      {/* AO5 Range */}
       <View style={styles.rangeRow}>
         <View style={styles.rangeBox}>
           <Text style={styles.rangeLabel}>Min AO5</Text>
           <TextInput
-            value={minAo5 === "0" ? "" : minAo5} // show empty instead of 0
+            value={minAo5 === "0" ? "" : minAo5}
             onChangeText={setMinAo5}
             placeholder="Min AO5"
             keyboardType="numeric"
             style={styles.rangeInput}
           />
         </View>
-
         <View style={styles.rangeBox}>
           <Text style={styles.rangeLabel}>Max AO5</Text>
           <TextInput
-            value={maxAo5 === "9999" ? "" : maxAo5} // show empty instead of 9999
+            value={maxAo5 === "9999" ? "" : maxAo5}
             onChangeText={setMaxAo5}
             placeholder="Max AO5"
             keyboardType="numeric"
@@ -79,7 +76,6 @@ const UsersList = () => {
 
         <TouchableOpacity
           onPress={() => {
-            // reset quick action
             setMinAo5("0");
             setMaxAo5("9999");
             setSearchText("");
@@ -90,6 +86,7 @@ const UsersList = () => {
         </TouchableOpacity>
       </View>
 
+      {/* User List */}
       <View>
         <UserItem users={filteredList} isFetching={isFetching} />
       </View>
