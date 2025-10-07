@@ -1,4 +1,4 @@
-import { getUserById } from "@/api/auth"; // make sure this exists
+import { getUserById } from "@/api/auth";
 import OtherUser from "@/components/OtherUser";
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
@@ -16,8 +16,9 @@ const OtherUserPage = () => {
   } = useQuery({
     queryKey: ["user", userId],
     queryFn: () => getUserById(userId as string),
-    enabled: Boolean(userId), // only fetch if userId exists
+    enabled: Boolean(userId),
   });
+
   if (isLoading) {
     return (
       <View style={styles.center}>

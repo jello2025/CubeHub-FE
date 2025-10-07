@@ -1,5 +1,6 @@
 import { IClass } from "@/api/auth";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -16,21 +17,20 @@ interface UserItemProps {
 }
 
 const UserItem: React.FC<UserItemProps> = ({ users, isFetching }) => {
-  if (isFetching)
-    return (
-      <Text style={{ textAlign: "center", marginTop: 20 }}>Loading...</Text>
-    );
+  const router = useRouter();
+
+  if (isFetching) return <Text style={styles.centerText}>Loading...</Text>;
   if (!users || users.length === 0)
-    return (
-      <Text style={{ textAlign: "center", marginTop: 20 }}>
-        No users found.
-      </Text>
-    );
+    return <Text style={styles.centerText}>No users found.</Text>;
 
   return (
     <ScrollView>
       {users.map((user) => (
-        <TouchableOpacity key={user._id} style={styles.card}>
+        <TouchableOpacity
+          key={user._id}
+          style={styles.card}
+          onPress={() => router.push(`/${user._id}`)}
+        >
           <View style={styles.userInfo}>
             <Image
               source={
@@ -40,12 +40,11 @@ const UserItem: React.FC<UserItemProps> = ({ users, isFetching }) => {
               }
               style={styles.pfp}
             />
-            <View style={{ flexDirection: "column" }}>
+            <View>
               <Text style={styles.username}>{user.username}</Text>
               <Text style={styles.time}>{user.ao5}</Text>
             </View>
           </View>
-
           <FontAwesome name="arrow-right" size={20} color="#2563EB" />
         </TouchableOpacity>
       ))}
@@ -76,7 +75,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  // <<< reverted to original PFP style you had
   pfp: {
     height: 70,
     width: 70,
@@ -94,6 +92,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "500",
     color: "#666",
-    justifyContent: "flex-end",
+  },
+  centerText: {
+    textAlign: "center",
+    marginTop: 20,
   },
 });
