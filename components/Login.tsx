@@ -1,5 +1,5 @@
 import { login } from "@/api/auth";
-import AuthContext from "@/app/AuthContext";
+import AuthContext from "@/context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     height: "100%",
-    backgroundColor: "#c5eaf4ff",
+    backgroundColor: "#E6F0FF",
   },
   formContainer: {
     width: 370,

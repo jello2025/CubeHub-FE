@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
-import AuthContext from "./AuthContext";
+import AuthContext from "../context/AuthContext";
 
 export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,7 +18,7 @@ export default function RootLayout() {
   useEffect(() => {
     const checkToken = async () => {
       const token = await getToken();
-      setIsAuthenticated(!!token);
+      setIsAuthenticated(token ? true : false);
       setIsReady(true);
     };
     checkToken();
@@ -48,14 +48,17 @@ export default function RootLayout() {
               />
             </>
           )}
-
+          <Stack.Screen name="loginPage" options={{ headerShown: false }} />
+          <Stack.Screen name="registerPage" options={{ headerShown: false }} />
+          <Stack.Screen name="statsPage" options={{ headerShown: false }} />
           {/* Protected Screens */}
           <Stack.Protected guard={isAuthenticated}>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen
               name="(protected)/(tabs)"
               options={{ headerShown: false }}
             />
+            <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+            {/* <Stack.Screen name="(protected)" options={{ headerShown: false }} /> */}
           </Stack.Protected>
         </Stack>
       </AuthContext.Provider>
