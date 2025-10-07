@@ -153,9 +153,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   podiumAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: "100%",
+    height: "100%",
+    borderRadius: 100,
   },
   crown: {
     position: "absolute",

@@ -50,6 +50,8 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
     enabled: !!userId,
   });
 
+  console.log(data);
+
   if (!user) {
     return (
       <View style={styles.center}>
@@ -231,7 +233,6 @@ const styles = StyleSheet.create({
   pfp: {
     height: 130,
     width: 130,
-    padding: 20,
     borderRadius: 70,
     borderWidth: 4,
     borderColor: "#2563EB",

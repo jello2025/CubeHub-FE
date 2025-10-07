@@ -23,6 +23,7 @@ export interface IClass {
   ao12: number;
   ao5: number;
   single: number;
+  email: string;
 }
 
 // 🔹 Existing APIs
