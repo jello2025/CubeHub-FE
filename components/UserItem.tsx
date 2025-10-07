@@ -35,7 +35,7 @@ const UserItem: React.FC<UserItemProps> = ({ users, isFetching }) => {
             <Image
               source={
                 user.image
-                  ? { uri: `http://localhost:8000/${user.image}` }
+                  ? { uri: user.image }
                   : require("@/assets/images/cubehub-logo.png")
               }
               style={styles.pfp}
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   pfp: {
     height: 70,
     width: 70,
-    padding: 10,
+
     borderRadius: 35,
     borderWidth: 4,
     borderColor: "#2563EB",

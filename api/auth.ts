@@ -23,6 +23,7 @@ export interface IClass {
   ao12: number;
   ao5: number;
   single: number;
+  email: string;
 }
 
 // 🔹 Existing APIs
@@ -95,6 +96,11 @@ const getUserById = async (userId: string) => {
   return data;
 };
 
+const getUserScrambleHistory = async (userId: string) => {
+  const res = await instance.get(`/scramble/${userId}/history`);
+  return res.data.history;
+};
+
 // 🔹 EXPORT ALL
 export {
   getAllUsers,
@@ -102,6 +108,7 @@ export {
   getMyProfile,
   getScramble,
   getUserById,
+  getUserScrambleHistory,
   login,
   register,
   submitSolve,

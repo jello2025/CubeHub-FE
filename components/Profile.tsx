@@ -2,6 +2,7 @@ import { getMyProfile } from "@/api/auth";
 import { deleteToken } from "@/api/storage";
 import AuthContext from "@/context/AuthContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -52,6 +53,7 @@ const Profile = () => {
     </Text>
   </View>;
   console.log(data?.image);
+  console.log("AHHHH", `http://localhost:8000/${data?.image}`);
 
   return (
     <ScrollView style={{ backgroundColor: "#E6F0FF", height: "100%" }}>
@@ -59,12 +61,23 @@ const Profile = () => {
         <Image
           source={
             data?.image
-              ? { uri: `http://localhost:8000/${data.image}` }
+              ? { uri: data.image }
               : require("@/assets/images/cubehub-logo.png")
           }
           style={styles.pfp}
         />
         <Text style={styles.username}>@{data?.username}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 5,
+          }}
+        >
+          <MaterialIcons name="email" size={24} color="gray" />
+          <Text style={{ color: "gray" }}>{data?.email}</Text>
+        </View>
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignout}>
           <Text style={styles.signOutButtonText}>Sign out</Text>
         </TouchableOpacity>
@@ -125,7 +138,7 @@ const styles = StyleSheet.create({
   pfp: {
     height: 130,
     width: 130,
-    padding: 20,
+    // padding: 20,
     borderRadius: 70,
     borderWidth: 4,
     borderColor: "#2563EB",
