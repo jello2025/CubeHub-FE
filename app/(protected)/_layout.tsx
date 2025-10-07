@@ -43,11 +43,13 @@ const ProtectedLayout = () => {
           href: null,
         }}
       />
+
       <Tabs.Screen
         name="(tabs)/timerPage"
         options={{
           title: "Challenge",
           headerShown: false,
+
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cube-sharp" size={size} color={color} />
           ),
@@ -58,6 +60,7 @@ const ProtectedLayout = () => {
         options={{
           title: "leader board",
           headerShown: false,
+
           tabBarIcon: ({ color, size }) => (
             <FontAwesome5 name="trophy" size={size} color={color} />
           ),
@@ -89,6 +92,14 @@ const ProtectedLayout = () => {
           tabBarIcon: ({ color, size }) => (
             <FontAwesome name="users" size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="(tabs)/[userId]"
+        options={{
+          title: "profile",
+          headerShown: false,
+          href: null,
         }}
       />
     </Tabs>

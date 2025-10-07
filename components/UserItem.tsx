@@ -1,6 +1,5 @@
-import { getAllUsers } from "@/api/auth";
+import { IClass } from "@/api/auth";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import {
   Image,
@@ -11,37 +10,45 @@ import {
   View,
 } from "react-native";
 
-const UserItem = () => {
-  const { data, isFetching, isSuccess } = useQuery({
-    queryKey: ["Users"],
-    queryFn: getAllUsers,
-  });
+interface UserItemProps {
+  users?: IClass[];
+  isFetching?: boolean;
+}
 
-  console.log(data);
+const UserItem: React.FC<UserItemProps> = ({ users, isFetching }) => {
+  if (isFetching)
+    return (
+      <Text style={{ textAlign: "center", marginTop: 20 }}>Loading...</Text>
+    );
+  if (!users || users.length === 0)
+    return (
+      <Text style={{ textAlign: "center", marginTop: 20 }}>
+        No users found.
+      </Text>
+    );
 
   return (
     <ScrollView>
-      {isSuccess &&
-        data?.map((user) => (
-          <TouchableOpacity key={user._id} style={styles.card}>
-            <View style={styles.userInfo}>
-              <Image
-                source={
-                  user.image
-                    ? { uri: `http://localhost:8000/${user.image}` }
-                    : require("@/assets/images/cubehub-logo.png")
-                }
-                style={styles.pfp}
-              />
-              <View style={{ flexDirection: "column" }}>
-                <Text style={styles.username}>{user.username}</Text>
-                <Text style={styles.time}>{user.ao5}</Text>
-              </View>
+      {users.map((user) => (
+        <TouchableOpacity key={user._id} style={styles.card}>
+          <View style={styles.userInfo}>
+            <Image
+              source={
+                user.image
+                  ? { uri: `http://localhost:8000/${user.image}` }
+                  : require("@/assets/images/cubehub-logo.png")
+              }
+              style={styles.pfp}
+            />
+            <View style={{ flexDirection: "column" }}>
+              <Text style={styles.username}>{user.username}</Text>
+              <Text style={styles.time}>{user.ao5}</Text>
             </View>
+          </View>
 
-            <FontAwesome name="arrow-right" size={20} color="#2563EB" />
-          </TouchableOpacity>
-        ))}
+          <FontAwesome name="arrow-right" size={20} color="#2563EB" />
+        </TouchableOpacity>
+      ))}
     </ScrollView>
   );
 };
@@ -69,6 +76,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
+  // <<< reverted to original PFP style you had
   pfp: {
     height: 70,
     width: 70,
