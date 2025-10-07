@@ -1,8 +1,8 @@
 import { getMyProfile, getScramble, submitSolve } from "@/api/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import ConfettiCannon from "react-native-confetti-cannon";
 const Timer = () => {
   const queryClient = useQueryClient();
 
@@ -21,6 +21,10 @@ const Timer = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Confetti ref (optional)
+  const confettiRef = useRef<any>(null);
 
   // If already submitted, set state
   useEffect(() => {
@@ -56,6 +60,7 @@ const Timer = () => {
   };
 
   const handleSubmit = async () => {
+    if (!scramble) return;
     try {
       await submitSolve({
         scrambleId: scramble._id,
@@ -63,6 +68,8 @@ const Timer = () => {
       });
 
       setSubmitted(true);
+      setShowConfetti(true); // trigger confetti
+
       queryClient.invalidateQueries({ queryKey: ["User"] });
       queryClient.invalidateQueries({ queryKey: ["Scramble"] });
     } catch (err: any) {
@@ -95,18 +102,27 @@ const Timer = () => {
       <Text style={styles.date}>{formattedDate}</Text>
 
       {submitted ? (
-        // ✅ Victory card only
-        <View style={styles.victoryCard}>
-          <Text style={styles.victoryTitle}>🎉 Solve Submitted!</Text>
-          <Text style={styles.victoryText}>Scramble:</Text>
-          <Text style={styles.victoryScramble}>{scramble?.scramble}</Text>
-          <Text style={styles.victoryText}>
-            Time: {seconds}.{ms.toString().padStart(2, "0")}s
-          </Text>
-          <Text style={styles.victoryMessage}>Keep up the streak! 🔥</Text>
-        </View>
+        <>
+          {showConfetti && (
+            <ConfettiCannon
+              count={200}
+              origin={{ x: 200, y: 0 }}
+              fadeOut={true}
+              onAnimationEnd={() => setShowConfetti(false)}
+            />
+          )}
+          {/* ✅ Victory card only */}
+          <View style={styles.victoryCard}>
+            <Text style={styles.victoryTitle}>🎉 Solve Submitted!</Text>
+            <Text style={styles.victoryText}>Scramble:</Text>
+            <Text style={styles.victoryScramble}>{scramble?.scramble}</Text>
+            <Text style={styles.victoryText}>
+              Time: {seconds}.{ms.toString().padStart(2, "0")}s
+            </Text>
+            <Text style={styles.victoryMessage}>Keep up the streak! 🔥</Text>
+          </View>
+        </>
       ) : (
-        // Timer + submit if not submitted
         <>
           <View style={styles.scrambleCard}>
             <Text style={styles.scrambleText}>{scramble?.scramble}</Text>

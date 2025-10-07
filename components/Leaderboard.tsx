@@ -94,7 +94,9 @@ const Leaderboard = () => {
         <View key={item.userId} style={styles.card}>
           <Text style={styles.rank}>{index + 4}</Text>
           {item.image && (
-            <Image source={{ uri: item.image }} style={styles.avatar} />
+            <View style={styles.avatarWrapper}>
+              <Image source={{ uri: item.image }} style={styles.avatar} />
+            </View>
           )}
           <View style={styles.userInfo}>
             <Text style={styles.username}>{item.username}</Text>
@@ -195,9 +197,19 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   avatar: {
-    width: 50,
-    height: 50,
+    width: "100%",
+    height: "100%",
     borderRadius: 25,
+    // marginRight: 15,
+  },
+  avatarWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: "#2563EB",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 15,
   },
   userInfo: {

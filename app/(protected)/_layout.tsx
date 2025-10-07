@@ -74,16 +74,7 @@ const ProtectedLayout = () => {
           href: null,
         }}
       />
-      <Tabs.Screen
-        name="(tabs)/profilePage"
-        options={{
-          title: "Profile",
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="user" size={size} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="(tabs)/usersPage"
         options={{
@@ -91,6 +82,16 @@ const ProtectedLayout = () => {
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <FontAwesome name="users" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="(tabs)/profilePage"
+        options={{
+          title: "Profile",
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="user" size={size} color={color} />
           ),
         }}
       />
