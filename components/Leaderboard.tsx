@@ -4,6 +4,7 @@ import {
   IClass,
   ILeaderboardResponse,
 } from "@/api/auth";
+import { FontAwesome5 } from "@expo/vector-icons"; // make sure expo/vector-icons is installed
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -52,29 +53,47 @@ const Leaderboard = () => {
   const top3 = sortedLeaderboard.slice(0, 3);
   const rest = sortedLeaderboard.slice(3);
 
+  // Podium order: Left (2nd), Middle (1st), Right (3rd)
+  const podiumOrder = [top3[1], top3[0], top3[2]];
+  const podiumHeights = [100, 140, 100]; // smaller
+  const podiumBorders = ["#C0C0C0", "#FFD700", "#CD7F32"];
+  const podiumOffset = [10, 0, 10]; // float effect
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Today's Leaderboard</Text>
 
       {/* 🏆 Top 3 Podiums */}
-      <View style={styles.podiumWrapper}>
-        {top3.map((item, index) => {
-          const heights = [120, 100, 80]; // first is tallest
-          const crown = index === 0 ? "👑" : null;
-          const colors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+      <View style={[styles.podiumWrapper, { justifyContent: "center" }]}>
+        {podiumOrder.map((item, index) => {
+          const isFirst = index === 1; // middle podium is 1st
           return (
-            <View key={item.userId} style={styles.podiumColumn}>
+            <View
+              key={item.userId}
+              style={[
+                styles.podiumColumn,
+                { marginTop: podiumOffset[index], marginHorizontal: 10 },
+              ]}
+            >
               <View
                 style={[
                   styles.podiumCircle,
                   {
-                    height: heights[index],
-                    width: heights[index],
-                    backgroundColor: colors[index],
+                    height: podiumHeights[index],
+                    width: podiumHeights[index],
+                    borderColor: podiumBorders[index],
+                    borderWidth: 4,
                   },
                 ]}
               >
-                {crown && <Text style={styles.crown}>{crown}</Text>}
+                {isFirst && (
+                  <FontAwesome5
+                    name="crown"
+                    size={24}
+                    color="#FFD700"
+                    style={styles.crownIcon}
+                  />
+                )}
                 {item.image && (
                   <Image
                     source={{ uri: item.image }}
@@ -136,12 +155,12 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 16, color: "#333" },
   podiumWrapper: {
     flexDirection: "row",
-    justifyContent: "space-around",
     alignItems: "flex-end",
     marginBottom: 40,
   },
   podiumColumn: {
     alignItems: "center",
+    position: "relative",
   },
   podiumCircle: {
     borderRadius: 100,
@@ -153,16 +172,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 5,
+    backgroundColor: "#fff",
+    position: "relative",
   },
   podiumAvatar: {
-    width: "100%",
-    height: "100%",
+    width: "90%",
+    height: "90%",
     borderRadius: 100,
   },
-  crown: {
+  crownIcon: {
     position: "absolute",
     top: -20,
-    fontSize: 28,
     zIndex: 10,
   },
   podiumName: {
@@ -200,7 +220,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 25,
-    // marginRight: 15,
   },
   avatarWrapper: {
     width: 60,

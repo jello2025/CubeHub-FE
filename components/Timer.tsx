@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ConfettiCannon from "react-native-confetti-cannon";
+
 const Timer = () => {
   const queryClient = useQueryClient();
 
@@ -137,9 +138,15 @@ const Timer = () => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Submit Solve</Text>
-          </TouchableOpacity>
+          {/* Show submit button ONLY when timer is stopped */}
+          {!isRunning && elapsedTime > 0 && (
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.submitButtonText}>Submit Solve</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
     </View>

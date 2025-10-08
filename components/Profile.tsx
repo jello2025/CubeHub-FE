@@ -1,117 +1,179 @@
-import { getMyProfile } from "@/api/auth";
-import { deleteToken } from "@/api/storage";
+import { getMyProfile, getUserScrambleHistory } from "@/api/auth";
+import { deleteToken, getToken } from "@/api/storage";
 import AuthContext from "@/context/AuthContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { jwtDecode } from "jwt-decode";
 import React, { useContext } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+
+interface JwtPayload {
+  _id: string;
+  userId: string;
+  username: string;
+}
+
 const Profile = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
+
   const handleSignout = async () => {
     await setIsAuthenticated(false);
     deleteToken();
     router.replace("/loginPage");
   };
 
-  const { data, isFetching, isSuccess } = useQuery({
-    queryKey: ["User"],
+  // Fetch logged-in user profile
+  const { data: userData, isFetching: profileLoading } = useQuery({
+    queryKey: ["UserProfile"],
     queryFn: getMyProfile,
   });
-  console.log(data);
-  // if (isFetching) return <Text>Loading...</Text>;
 
-  if (isFetching) return;
+  console.log("USER DATA HERE", userData);
+  console.log("USER ID HEREEE", userData?._id);
 
-  <View
-    style={{
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "#F5F7FA",
-    }}
-  >
-    <ActivityIndicator size="large" color="#4A90E2" />
-    <Text
-      style={{
-        marginTop: 20,
-        fontSize: 16,
-        color: "#333",
-      }}
-    >
-      Loading, please wait...
-    </Text>
-  </View>;
-  console.log(data?.image);
-  console.log("AHHHH", `http://localhost:8000/${data?.image}`);
+  // Extract user ID from token
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ["scrambleHistory"],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) return [];
+      const decoded = jwtDecode<JwtPayload>(token);
+      const userId = decoded.userId;
+      console.log("Decoded token:🚨🚨", decoded.userId);
+      console.log("GAHH‼️‼️", userId);
+
+      return getUserScrambleHistory(userId);
+    },
+    enabled: !!userData,
+  });
+
+  console.log("HISTORY DATA HEREEE", historyData);
+
+  const formatTime = (time: number | string) => {
+    let t = Number(time);
+    if (t > 1000) t = t / 1000;
+    const rounded = Math.round(t * 100) / 100;
+    return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+  };
+
+  if (profileLoading || historyLoading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={{ marginTop: 20, fontSize: 16, color: "#333" }}>
+          Loading, please wait...
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={{ backgroundColor: "#E6F0FF", height: "100%" }}>
-      <View style={styles.userInfo}>
-        <Image
-          source={
-            data?.image
-              ? { uri: data.image }
-              : require("@/assets/images/cubehub-logo.png")
-          }
-          style={styles.pfp}
-        />
-        <Text style={styles.username}>@{data?.username}</Text>
+    <FlatList
+      style={{ backgroundColor: "#E6F0FF" }}
+      data={historyData || []}
+      keyExtractor={(item) => item.scrambleId}
+      contentContainerStyle={{ paddingBottom: 50 }}
+      ListHeaderComponent={
+        <>
+          {/* User Info */}
+          <View style={styles.userInfo}>
+            <Image
+              source={
+                userData?.image
+                  ? { uri: userData.image }
+                  : require("@/assets/images/cubehub-logo.png")
+              }
+              style={userData?.image ? styles.pfpDynamic : styles.pfp}
+            />
+            <Text style={styles.username}>@{userData?.username}</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <MaterialIcons name="email" size={24} color="gray" />
+              <Text style={{ color: "gray" }}>{userData?.email}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.signOutButton}
+              onPress={handleSignout}
+            >
+              <Text style={styles.signOutButtonText}>Sign out</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Streak */}
+          <LinearGradient
+            colors={["#2563EB", "#7cd4faff"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.streak}
+          >
+            <FontAwesome5 name="fire-alt" size={70} color="orange" />
+            <Text style={styles.days}>15 Days</Text>
+          </LinearGradient>
+
+          {/* Stats */}
+          <View style={styles.stats}>
+            <Text style={styles.statsTitle}>3x3 Stats</Text>
+            <View style={{ flexDirection: "row" }}>
+              <View style={styles.statsBox}>
+                <Text style={styles.numberText}>{userData?.ao5}</Text>
+                <Text style={styles.numberTextSmall}>Ao5</Text>
+              </View>
+              <View style={styles.statsBox}>
+                <Text style={styles.numberText}>{userData?.ao12}</Text>
+                <Text style={styles.numberTextSmall}>Ao12</Text>
+              </View>
+              <View style={styles.statsBox}>
+                <Text style={styles.numberText}>{userData?.single}</Text>
+                <Text style={styles.numberTextSmall}>Single</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Scramble History Title */}
+          <View style={styles.historyContainer}>
+            <Text style={styles.historyTitle}>Scramble History</Text>
+          </View>
+        </>
+      }
+      renderItem={({ item }) => (
         <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 5,
-          }}
+          style={[
+            styles.historyCard,
+            { marginHorizontal: 35, marginBottom: 10 },
+          ]}
         >
-          <MaterialIcons name="email" size={24} color="gray" />
-          <Text style={{ color: "gray" }}>{data?.email}</Text>
+          <Text style={styles.historyDate}>
+            {new Date(item.date).toLocaleDateString()}
+          </Text>
+          <Text style={styles.historyTime}>Time: {formatTime(item.time)}s</Text>
+          <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
         </View>
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignout}>
-          <Text style={styles.signOutButtonText}>Sign out</Text>
-        </TouchableOpacity>
-      </View>
-      <LinearGradient
-        colors={["#2563EB", "#7cd4faff"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.streak}
-      >
-        <FontAwesome5 name="fire-alt" size={70} color="orange" />
-        <Text style={styles.days}>15 Days</Text>
-      </LinearGradient>
-      <View style={styles.stats}>
-        <Text style={styles.statsTitle}>3x3 Stats</Text>
-        <View style={{ flexDirection: "row" }}>
-          {/* ao5 */}
-          <View style={styles.statsBox}>
-            <Text style={styles.numberText}>{data?.ao5}</Text>
-            <Text style={styles.numberTextSmall}>Ao5</Text>
-          </View>
-          {/* ao12 */}
-          <View style={styles.statsBox}>
-            <Text style={styles.numberText}>{data?.ao12}</Text>
-            <Text style={styles.numberTextSmall}>Ao12</Text>
-          </View>
-          {/* single */}
-          <View style={styles.statsBox}>
-            <Text style={styles.numberText}>{data?.single}</Text>
-            <Text style={styles.numberTextSmall}>Single</Text>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
+      )}
+      ListEmptyComponent={
+        <Text
+          style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
+        >
+          No scramble history yet.
+        </Text>
+      }
+    />
   );
 };
 
@@ -135,15 +197,21 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     gap: 14,
   },
-  pfp: {
+  pfpDynamic: {
     height: 130,
     width: 130,
-    // padding: 20,
     borderRadius: 70,
     borderWidth: 4,
     borderColor: "#2563EB",
   },
-
+  pfp: {
+    height: 130,
+    width: 130,
+    padding: 20,
+    borderRadius: 70,
+    borderWidth: 4,
+    borderColor: "#2563EB",
+  },
   streak: {
     justifyContent: "center",
     alignItems: "center",
@@ -199,13 +267,12 @@ const styles = StyleSheet.create({
   },
   numberTextSmall: {
     fontSize: 15,
-    // fontWeight: "700",
     color: "#616161ff",
   },
   statsBox: {
-    width: 80, // small width
-    height: 80, // small height
-    backgroundColor: "#E5E5E5", // light gray
+    width: 80,
+    height: 80,
+    backgroundColor: "#E5E5E5",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -217,7 +284,7 @@ const styles = StyleSheet.create({
     margin: 5,
   },
   signOutButton: {
-    backgroundColor: "#ff6565ff", // a nice red
+    backgroundColor: "#ff6565ff",
     paddingVertical: 14,
     paddingHorizontal: 50,
     borderRadius: 12,
@@ -230,10 +297,54 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-
   signOutButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  center: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  historyContainer: {
+    marginTop: 20,
+  },
+  historyTitle: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#2563EB",
+    marginBottom: 10,
+    marginLeft: 30,
+  },
+  historyCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  historyDate: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  historyTime: {
+    fontSize: 14,
+    color: "#2563EB",
+    marginTop: 4,
+  },
+  historyRank: {
+    fontSize: 14,
+    color: "#888",
+    marginTop: 2,
+  },
+  noHistory: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 10,
   },
 });
