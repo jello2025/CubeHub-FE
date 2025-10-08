@@ -8,6 +8,7 @@ import AuthContext from "@/context/AuthContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { jwtDecode } from "jwt-decode";
@@ -38,6 +39,7 @@ const Profile = () => {
   const [ao5, setAo5] = useState("");
   const [ao12, setAo12] = useState("");
   const [single, setSingle] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const handleSignout = async () => {
     await setIsAuthenticated(false);
@@ -51,7 +53,7 @@ const Profile = () => {
     queryFn: getMyProfile,
   });
 
-  // Extract user ID from token
+  // Fetch user scramble history
   const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ["scrambleHistory"],
     queryFn: async () => {
@@ -64,10 +66,16 @@ const Profile = () => {
     enabled: !!userData,
   });
 
+  // Mutation for updating stats or image
   const mutation = useMutation({
     mutationKey: ["updateUserStats", userData?._id],
     mutationFn: (
-      updatedStats: Partial<{ ao5: number; ao12: number; single: number }>
+      updatedStats: Partial<{
+        ao5: number;
+        ao12: number;
+        single: number;
+        image: string;
+      }>
     ) => {
       if (!userData?._id) throw new Error("User ID not available");
       return updateUserStats(userData._id, updatedStats);
@@ -75,6 +83,7 @@ const Profile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["UserProfile"] });
       setModalVisible(false);
+      setUploading(false);
     },
   });
 
@@ -85,6 +94,28 @@ const Profile = () => {
       single: single ? Number(single) : undefined,
     };
     mutation.mutate(updated);
+  };
+
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access gallery is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const uri = result.assets[0].uri;
+      setUploading(true);
+      mutation.mutate({ image: uri });
+    }
   };
 
   const formatTime = (time: number | string) => {
@@ -116,14 +147,30 @@ const Profile = () => {
           <>
             {/* User Info */}
             <View style={styles.userInfo}>
-              <Image
-                source={
-                  userData?.image
-                    ? { uri: userData.image }
-                    : require("@/assets/images/cubehub-logo.png")
-                }
-                style={userData?.image ? styles.pfpDynamic : styles.pfp}
-              />
+              <View style={{ position: "relative" }}>
+                <Image
+                  source={
+                    userData?.image
+                      ? { uri: userData.image }
+                      : require("@/assets/images/cubehub-logo.png")
+                  }
+                  style={userData?.image ? styles.pfpDynamic : styles.pfp}
+                />
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: "#2563EB",
+                    borderRadius: 20,
+                    padding: 6,
+                  }}
+                >
+                  <FontAwesome5 name="camera" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              {uploading && <Text style={{ marginTop: 8 }}>Uploading...</Text>}
               <Text style={styles.username}>@{userData?.username}</Text>
               <View
                 style={{
@@ -152,7 +199,7 @@ const Profile = () => {
               style={styles.streak}
             >
               <FontAwesome5 name="fire-alt" size={70} color="orange" />
-              <Text style={styles.days}>15 Days</Text>
+              <Text style={styles.days}>{userData?.streak ?? 0} Days</Text>
             </LinearGradient>
 
             {/* Stats */}
@@ -171,15 +218,15 @@ const Profile = () => {
               </View>
               <View style={{ flexDirection: "row" }}>
                 <View style={styles.statsBox}>
-                  <Text style={styles.numberText}>{userData?.ao5}</Text>
+                  <Text style={styles.numberText}>{userData?.ao5 ?? 0}</Text>
                   <Text style={styles.numberTextSmall}>Ao5</Text>
                 </View>
                 <View style={styles.statsBox}>
-                  <Text style={styles.numberText}>{userData?.ao12}</Text>
+                  <Text style={styles.numberText}>{userData?.ao12 ?? 0}</Text>
                   <Text style={styles.numberTextSmall}>Ao12</Text>
                 </View>
                 <View style={styles.statsBox}>
-                  <Text style={styles.numberText}>{userData?.single}</Text>
+                  <Text style={styles.numberText}>{userData?.single ?? 0}</Text>
                   <Text style={styles.numberTextSmall}>Single</Text>
                 </View>
               </View>

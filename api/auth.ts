@@ -24,6 +24,7 @@ export interface IClass {
   ao5: number;
   single: number;
   email: string;
+  streak: number;
 }
 
 // 🔹 Existing APIs
@@ -101,9 +102,16 @@ const getUserScrambleHistory = async (userId: string) => {
   return res.data.history;
 };
 
+interface UpdateUserStatsPayload {
+  ao5?: number;
+  ao12?: number;
+  single?: number;
+  image?: string; // added optional image property
+}
+
 const updateUserStats = async (
   userId: string,
-  updatedStats: Partial<{ ao5: number; ao12: number; single: number }>
+  updatedStats: UpdateUserStatsPayload
 ) => {
   const res = await instance.put(`/auth/${userId}`, updatedStats);
   return res.data;

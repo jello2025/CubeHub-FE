@@ -4,7 +4,7 @@ import {
   IClass,
   ILeaderboardResponse,
 } from "@/api/auth";
-import { FontAwesome5 } from "@expo/vector-icons"; // make sure expo/vector-icons is installed
+import { FontAwesome5 } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -39,13 +39,16 @@ const Leaderboard = () => {
   const enrichedLeaderboard: LeaderboardEntry[] =
     leaderboardData.leaderboard.map((item) => {
       const user = users.find((u) => u._id === item.user);
-      let timeNum = Number(item.time ?? 0);
-      if (timeNum > 100) timeNum = timeNum / 1000;
+      const timeNum =
+        Number(item.time ?? 0) > 100
+          ? Number(item.time) / 1000
+          : Number(item.time ?? 0);
+
       return {
         username: user?.username ?? "Unknown",
         image: user?.image,
         time: timeNum,
-        userId: item.user,
+        userId: item.user ?? Math.random().toString(), // fallback key if missing
       };
     });
 
@@ -53,20 +56,25 @@ const Leaderboard = () => {
   const top3 = sortedLeaderboard.slice(0, 3);
   const rest = sortedLeaderboard.slice(3);
 
-  // Podium order: Left (2nd), Middle (1st), Right (3rd)
-  const podiumOrder = [top3[1], top3[0], top3[2]];
-  const podiumHeights = [100, 140, 100]; // smaller
+  // Safely handle missing top3 entries
+  const podiumOrder = [
+    top3[1] ?? { username: "", time: 0, userId: "left" },
+    top3[0] ?? { username: "", time: 0, userId: "middle" },
+    top3[2] ?? { username: "", time: 0, userId: "right" },
+  ];
+
+  const podiumHeights = [100, 140, 100];
   const podiumBorders = ["#C0C0C0", "#FFD700", "#CD7F32"];
-  const podiumOffset = [10, 0, 10]; // float effect
+  const podiumOffset = [10, 0, 10];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Today's Leaderboard</Text>
 
-      {/* 🏆 Top 3 Podiums */}
+      {/* Top 3 Podiums */}
       <View style={[styles.podiumWrapper, { justifyContent: "center" }]}>
         {podiumOrder.map((item, index) => {
-          const isFirst = index === 1; // middle podium is 1st
+          const isFirst = index === 1;
           return (
             <View
               key={item.userId}
@@ -130,15 +138,8 @@ const Leaderboard = () => {
 export default Leaderboard;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#E0F2FF",
-    height: "100%",
-    paddingTop: 50,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
+  container: { backgroundColor: "#E0F2FF", height: "100%", paddingTop: 50 },
+  content: { paddingHorizontal: 20, paddingBottom: 30 },
   title: {
     marginTop: 50,
     fontSize: 32,
@@ -147,21 +148,14 @@ const styles = StyleSheet.create({
     color: "#2563EB",
     marginBottom: 60,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { fontSize: 16, color: "#333" },
   podiumWrapper: {
     flexDirection: "row",
     alignItems: "flex-end",
     marginBottom: 40,
   },
-  podiumColumn: {
-    alignItems: "center",
-    position: "relative",
-  },
+  podiumColumn: { alignItems: "center", position: "relative" },
   podiumCircle: {
     borderRadius: 100,
     justifyContent: "center",
@@ -175,27 +169,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     position: "relative",
   },
-  podiumAvatar: {
-    width: "90%",
-    height: "90%",
-    borderRadius: 100,
-  },
-  crownIcon: {
-    position: "absolute",
-    top: -40,
-    zIndex: 10,
-  },
+  podiumAvatar: { width: "90%", height: "90%", borderRadius: 100 },
+  crownIcon: { position: "absolute", top: -40, zIndex: 10 },
   podiumName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
     marginBottom: 2,
   },
-  podiumTime: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#2563EB",
-  },
+  podiumTime: { fontSize: 14, fontWeight: "500", color: "#2563EB" },
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -216,11 +198,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#333",
   },
-  avatar: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 25,
-  },
+  avatar: { width: "100%", height: "100%", borderRadius: 25 },
   avatarWrapper: {
     width: 60,
     height: 60,
@@ -237,14 +215,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  username: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  time: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#2563EB",
-  },
+  username: { fontSize: 18, fontWeight: "600", color: "#333" },
+  time: { fontSize: 16, fontWeight: "500", color: "#2563EB" },
 });
