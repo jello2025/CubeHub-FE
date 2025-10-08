@@ -1,14 +1,16 @@
-import { getUserScrambleHistory } from "@/api/auth";
+import { getUserPosts, getUserScrambleHistory } from "@/api/auth";
 import { FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -26,7 +28,47 @@ interface ScrambleHistoryItem {
   rank: number;
 }
 
+interface PostItem {
+  _id: string;
+  image: string;
+  description: string;
+  date: string;
+}
+interface IPost {
+  _id: string;
+  image: string;
+  description: string;
+  date: string;
+}
+
+const { width } = Dimensions.get("window");
+const PADDING = 35; // left + right padding from container
+const GAP = 10; // spacing between images
+const NUM_COLUMNS = 3;
+
+const IMAGE_SIZE = (width - 40 - 10) / 2;
+
 const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
+  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const router = useRouter();
+
+  const [activeTab, setActiveTab] = useState<"history" | "posts">("history");
+  const [selectedPost, setSelectedPost] = useState<IPost | null>(null);
+  const historyRef = useRef<FlatList>(null);
+  const postsRef = useRef<FlatList>(null);
+
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ["scrambleHistory", userId],
+    queryFn: () => getUserScrambleHistory(userId),
+    enabled: !!userId,
+  });
+
+  const { data: postsData, isLoading: postsLoading } = useQuery({
+    queryKey: ["userPosts", userId],
+    queryFn: () => getUserPosts(userId),
+    enabled: !!userId,
+  });
+
   const formatTime = (time: number | string) => {
     let t = Number(time);
     if (t > 1000) t = t / 1000;
@@ -34,22 +76,17 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
     return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
   };
 
-  const router = useRouter();
-  const { userId } = useLocalSearchParams<{ userId: string }>();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["scrambleHistory", userId],
-    queryFn: () => getUserScrambleHistory(userId),
-    enabled: !!userId,
-  });
-
-  if (!user) {
+  if (!user || historyLoading || postsLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#2563EB" />
       </View>
     );
   }
+
+  const displayData =
+    activeTab === "history" ? historyData || [] : postsData || [];
+  const scrollRef = activeTab === "history" ? historyRef : postsRef;
 
   const ListHeader = () => (
     <>
@@ -111,48 +148,124 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
         </View>
       </View>
 
-      <View style={styles.historyContainer}>
-        <Text style={styles.historyTitle}>Scramble History</Text>
+      {/* Tabbar */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === "history" && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab("history")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "history" && styles.activeTabText,
+            ]}
+          >
+            Scramble History
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === "posts" && styles.activeTab]}
+          onPress={() => setActiveTab("posts")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "posts" && styles.activeTabText,
+            ]}
+          >
+            Posts
+          </Text>
+        </TouchableOpacity>
       </View>
+      <Modal
+        visible={!!selectedPost}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedPost(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalContent, { width: "90%" }]}>
+            {/* Close X */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedPost(null)}
+            >
+              <Text style={styles.closeButtonText}>×</Text>
+            </TouchableOpacity>
+
+            <Image
+              source={{ uri: selectedPost?.image }}
+              style={{ width: "100%", height: 300, borderRadius: 12 }}
+            />
+            <Text style={{ marginTop: 10, fontSize: 16 }}>
+              {selectedPost?.description}
+            </Text>
+            <Text style={{ color: "#666", marginTop: 4 }}>
+              {selectedPost ? new Date(selectedPost.date).toLocaleString() : ""}
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 
-  return isLoading ? (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color="#2563EB" />
-    </View>
-  ) : (
+  return (
     <FlatList
-      style={{ backgroundColor: "#E6F0FF", flex: 1 }}
-      data={data || []}
-      keyExtractor={(item) => item.scrambleId}
+      ref={scrollRef}
+      key={activeTab}
+      data={displayData}
+      keyExtractor={(item) =>
+        activeTab === "history" ? item.scrambleId : item._id
+      }
       ListHeaderComponent={ListHeader}
       contentContainerStyle={{ paddingBottom: 50 }}
-      renderItem={({ item }) => (
-        <View
-          style={[
-            styles.historyCard,
-            { marginHorizontal: 35, marginBottom: 10 },
-          ]}
-        >
-          <Text style={styles.historyDate}>
-            {new Date(item.date).toLocaleDateString()}
-          </Text>
-          <Text style={styles.historyTime}>
-            {`Time: ${
-              Number(item.time) % 1 === 0
-                ? Number(item.time)
-                : Math.round(Number(item.time) * 100) / 100
-            }s`}
-          </Text>
-          <Text style={styles.historyRank}>{`Rank: #${item.rank}`}</Text>
-        </View>
-      )}
+      numColumns={activeTab === "posts" ? 2 : 1}
+      renderItem={({ item }) =>
+        activeTab === "history" ? (
+          <View
+            style={[
+              styles.historyCard,
+              { marginHorizontal: 35, marginBottom: 10, marginTop: 30 },
+            ]}
+          >
+            <Text style={styles.historyDate}>
+              {new Date(item.date).toLocaleDateString()}
+            </Text>
+            <Text style={styles.historyTime}>
+              Time: {formatTime(item.time)}s
+            </Text>
+            <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => setSelectedPost(item)}
+            style={styles.postCard}
+          >
+            <Image
+              source={{ uri: item.image }}
+              style={{
+                width: IMAGE_SIZE,
+                height: IMAGE_SIZE,
+                borderRadius: 12,
+              }}
+            />
+            {/* <Text style={{ marginTop: 6 }}>{item.description}</Text>
+            <Text style={{ color: "#666", fontSize: 12, marginTop: 2 }}>
+              {new Date(item.date).toLocaleDateString()}
+            </Text> */}
+          </TouchableOpacity>
+        )
+      }
       ListEmptyComponent={
         <Text
           style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
         >
-          No scramble history yet.
+          {activeTab === "history"
+            ? "No scramble history yet."
+            : "No posts yet."}
         </Text>
       }
     />
@@ -313,5 +426,101 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 10,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginHorizontal: 35,
+    backgroundColor: "#E5E5E5",
+    borderRadius: 30,
+    overflow: "hidden",
+    marginTop: 20,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeTab: {
+    backgroundColor: "#2563EB",
+  },
+  tabText: {
+    color: "#555",
+    fontWeight: "600",
+  },
+  activeTabText: {
+    color: "#fff",
+  },
+  postCard: {
+    marginTop: 30,
+    margin: 5,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginVertical: 8,
+  },
+  modalButton: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    backgroundColor: "#ccc",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
