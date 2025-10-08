@@ -34,11 +34,11 @@ const UserItem: React.FC<UserItemProps> = ({ users, isFetching }) => {
           <View style={styles.userInfo}>
             <Image
               source={
-                user.image
+                user?.image
                   ? { uri: user.image }
                   : require("@/assets/images/cubehub-logo.png")
               }
-              style={styles.pfp}
+              style={user?.image ? styles.pfpDynamic : styles.pfp}
             />
             <View>
               <Text style={styles.username}>{user.username}</Text>
@@ -78,7 +78,14 @@ const styles = StyleSheet.create({
   pfp: {
     height: 70,
     width: 70,
-
+    borderRadius: 35,
+    borderWidth: 4,
+    borderColor: "#2563EB",
+    padding: 10,
+  },
+  pfpDynamic: {
+    height: 70,
+    width: 70,
     borderRadius: 35,
     borderWidth: 4,
     borderColor: "#2563EB",

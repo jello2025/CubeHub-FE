@@ -1,8 +1,9 @@
 import { getMyProfile, getScramble, submitSolve } from "@/api/auth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ConfettiCannon from "react-native-confetti-cannon";
+
 const Timer = () => {
   const queryClient = useQueryClient();
 
@@ -22,6 +23,9 @@ const Timer = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // store updated streak locally if you want
+  const [streak, setStreak] = useState(user?.streak || 0);
 
   // Confetti ref (optional)
   const confettiRef = useRef<any>(null);
@@ -49,6 +53,25 @@ const Timer = () => {
     };
   }, [isRunning, startTime]);
 
+  // ✅ useMutation for submitting solve
+  const solveMutation = useMutation({
+    mutationKey: ["submitSolve", scramble?._id],
+    mutationFn: (payload: { scrambleId: string; duration: number }) =>
+      submitSolve(payload),
+    onSuccess: (data) => {
+      setSubmitted(true);
+      setShowConfetti(true);
+      queryClient.invalidateQueries({ queryKey: ["User"] });
+      queryClient.invalidateQueries({ queryKey: ["Scramble"] });
+
+      // update local streak if returned
+      if (data?.streak !== undefined) setStreak(data.streak);
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || "Submit failed");
+    },
+  });
+
   const handleTap = () => {
     if (!isRunning) {
       setStartTime(Date.now());
@@ -59,23 +82,9 @@ const Timer = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!scramble) return;
-    try {
-      await submitSolve({
-        scrambleId: scramble._id,
-        duration: elapsedTime,
-      });
-
-      setSubmitted(true);
-      setShowConfetti(true); // trigger confetti
-
-      queryClient.invalidateQueries({ queryKey: ["User"] });
-      queryClient.invalidateQueries({ queryKey: ["Scramble"] });
-    } catch (err: any) {
-      console.log("Submit error:", err);
-      alert(err.response?.data?.message || "Submit failed");
-    }
+    solveMutation.mutate({ scrambleId: scramble._id, duration: elapsedTime });
   };
 
   // Format time
@@ -119,7 +128,9 @@ const Timer = () => {
             <Text style={styles.victoryText}>
               Time: {seconds}.{ms.toString().padStart(2, "0")}s
             </Text>
-            <Text style={styles.victoryMessage}>Keep up the streak! 🔥</Text>
+            <Text style={styles.victoryMessage}>
+              Keep up the streak! 🔥 ({streak} days)
+            </Text>
           </View>
         </>
       ) : (
@@ -137,9 +148,15 @@ const Timer = () => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Submit Solve</Text>
-          </TouchableOpacity>
+          {/* Show submit button ONLY when timer is stopped */}
+          {!isRunning && elapsedTime > 0 && (
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.submitButtonText}>Submit Solve</Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
     </View>
