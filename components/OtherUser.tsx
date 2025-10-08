@@ -29,28 +29,19 @@ interface ScrambleHistoryItem {
 const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
   const formatTime = (time: number | string) => {
     let t = Number(time);
-
-    // If time is unusually large (> 1000), assume it's in milliseconds
     if (t > 1000) t = t / 1000;
-
-    // Round to 2 decimals
     const rounded = Math.round(t * 100) / 100;
-
-    // Only show decimals if necessary
     return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
   };
 
   const router = useRouter();
   const { userId } = useLocalSearchParams<{ userId: string }>();
 
-  // Fetch user's scramble history
   const { data, isLoading } = useQuery({
     queryKey: ["scrambleHistory", userId],
     queryFn: () => getUserScrambleHistory(userId),
     enabled: !!userId,
   });
-
-  console.log(data);
 
   if (!user) {
     return (
@@ -60,10 +51,8 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
     );
   }
 
-  // FlatList header containing all the content above the scramble history
   const ListHeader = () => (
     <>
-      {/* Back Button */}
       <TouchableOpacity
         style={styles.backBtn}
         onPress={() => router.push("/(protected)/(tabs)/usersPage")}
@@ -71,7 +60,6 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
         <FontAwesome name="arrow-left" size={28} color="#2563EB" />
       </TouchableOpacity>
 
-      {/* User Info */}
       <View style={styles.userInfo}>
         <Image
           source={
@@ -95,20 +83,16 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
         </View>
       </View>
 
-      {/* Streak */}
-      {user.streak && (
-        <LinearGradient
-          colors={["#2563EB", "#7cd4faff"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.streak}
-        >
-          <FontAwesome5 name="fire-alt" size={70} color="orange" />
-          <Text style={styles.days}>{user.streak} Days</Text>
-        </LinearGradient>
-      )}
+      <LinearGradient
+        colors={["#2563EB", "#7cd4faff"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.streak}
+      >
+        <FontAwesome5 name="fire-alt" size={70} color="orange" />
+        <Text style={styles.days}>{user.streak} Days</Text>
+      </LinearGradient>
 
-      {/* Stats */}
       <View style={styles.stats}>
         <Text style={styles.statsTitle}>3x3 Stats</Text>
         <View style={{ flexDirection: "row" }}>
@@ -127,7 +111,6 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
         </View>
       </View>
 
-      {/* Scramble History Title */}
       <View style={styles.historyContainer}>
         <Text style={styles.historyTitle}>Scramble History</Text>
       </View>
@@ -138,10 +121,10 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
     <View style={styles.center}>
       <ActivityIndicator size="large" color="#2563EB" />
     </View>
-  ) : data && data.length > 0 ? (
+  ) : (
     <FlatList
       style={{ backgroundColor: "#E6F0FF", flex: 1 }}
-      data={data}
+      data={data || []}
       keyExtractor={(item) => item.scrambleId}
       ListHeaderComponent={ListHeader}
       contentContainerStyle={{ paddingBottom: 50 }}
@@ -155,49 +138,24 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
           <Text style={styles.historyDate}>
             {new Date(item.date).toLocaleDateString()}
           </Text>
-          <Text style={styles.historyTime}>Time: {formatTime(item.time)}s</Text>
-
-          <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
+          <Text style={styles.historyTime}>
+            {`Time: ${
+              Number(item.time) % 1 === 0
+                ? Number(item.time)
+                : Math.round(Number(item.time) * 100) / 100
+            }s`}
+          </Text>
+          <Text style={styles.historyRank}>{`Rank: #${item.rank}`}</Text>
         </View>
       )}
+      ListEmptyComponent={
+        <Text
+          style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
+        >
+          No scramble history yet.
+        </Text>
+      }
     />
-  ) : (
-    <View style={{ backgroundColor: "#E6F0FF", flex: 1 }}>
-      <FlatList
-        style={{ backgroundColor: "#E6F0FF", flex: 1 }}
-        data={data || []} // data or empty array
-        keyExtractor={(item) => item.scrambleId}
-        ListHeaderComponent={ListHeader}
-        contentContainerStyle={{ paddingBottom: 50 }}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.historyCard,
-              { marginHorizontal: 35, marginBottom: 10 },
-            ]}
-          >
-            <Text style={styles.historyDate}>
-              {new Date(item.date).toLocaleDateString()}
-            </Text>
-            <Text style={styles.historyTime}>
-              Time:{" "}
-              {Number(item.time) % 1 === 0
-                ? Number(item.time)
-                : Math.round(Number(item.time) * 100) / 100}
-              s
-            </Text>
-            <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text
-            style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
-          >
-            No scramble history yet.
-          </Text>
-        }
-      />
-    </View>
   );
 };
 
