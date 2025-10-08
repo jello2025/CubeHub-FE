@@ -75,15 +75,11 @@ const OtherUser: React.FC<OtherUserProps> = ({ user }) => {
       <View style={styles.userInfo}>
         <Image
           source={
-            user.image
-              ? {
-                  uri: user.image.startsWith("http")
-                    ? user.image
-                    : `http://localhost:8000/${user.image}`,
-                }
+            user?.image
+              ? { uri: user.image }
               : require("@/assets/images/cubehub-logo.png")
           }
-          style={styles.pfp}
+          style={user?.image ? styles.pfpDynamic : styles.pfp}
         />
         <Text style={styles.username}>@{user.username}</Text>
         <View
@@ -231,6 +227,14 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   pfp: {
+    height: 130,
+    width: 130,
+    borderRadius: 70,
+    borderWidth: 4,
+    padding: 20,
+    borderColor: "#2563EB",
+  },
+  pfpDynamic: {
     height: 130,
     width: 130,
     borderRadius: 70,

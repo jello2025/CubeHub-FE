@@ -89,7 +89,7 @@ const Leaderboard = () => {
                 {isFirst && (
                   <FontAwesome5
                     name="crown"
-                    size={24}
+                    size={40}
                     color="#FFD700"
                     style={styles.crownIcon}
                   />
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#2563EB",
-    marginBottom: 30,
+    marginBottom: 60,
   },
   loadingContainer: {
     flex: 1,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   crownIcon: {
     position: "absolute",
-    top: -20,
+    top: -40,
     zIndex: 10,
   },
   podiumName: {

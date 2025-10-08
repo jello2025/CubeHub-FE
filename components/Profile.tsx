@@ -1,19 +1,25 @@
-import { getMyProfile, getUserScrambleHistory } from "@/api/auth";
+import {
+  getMyProfile,
+  getUserScrambleHistory,
+  updateUserStats,
+} from "@/api/auth";
 import { deleteToken, getToken } from "@/api/storage";
 import AuthContext from "@/context/AuthContext";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { jwtDecode } from "jwt-decode";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,6 +32,12 @@ interface JwtPayload {
 
 const Profile = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
+  const queryClient = useQueryClient();
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [ao5, setAo5] = useState("");
+  const [ao12, setAo12] = useState("");
+  const [single, setSingle] = useState("");
 
   const handleSignout = async () => {
     await setIsAuthenticated(false);
@@ -39,9 +51,6 @@ const Profile = () => {
     queryFn: getMyProfile,
   });
 
-  console.log("USER DATA HERE", userData);
-  console.log("USER ID HEREEE", userData?._id);
-
   // Extract user ID from token
   const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ["scrambleHistory"],
@@ -50,15 +59,33 @@ const Profile = () => {
       if (!token) return [];
       const decoded = jwtDecode<JwtPayload>(token);
       const userId = decoded.userId;
-      console.log("Decoded token:🚨🚨", decoded.userId);
-      console.log("GAHH‼️‼️", userId);
-
       return getUserScrambleHistory(userId);
     },
     enabled: !!userData,
   });
 
-  console.log("HISTORY DATA HEREEE", historyData);
+  const mutation = useMutation({
+    mutationKey: ["updateUserStats", userData?._id],
+    mutationFn: (
+      updatedStats: Partial<{ ao5: number; ao12: number; single: number }>
+    ) => {
+      if (!userData?._id) throw new Error("User ID not available");
+      return updateUserStats(userData._id, updatedStats);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["UserProfile"] });
+      setModalVisible(false);
+    },
+  });
+
+  const handleUpdateStats = () => {
+    const updated = {
+      ao5: ao5 ? Number(ao5) : undefined,
+      ao12: ao12 ? Number(ao12) : undefined,
+      single: single ? Number(single) : undefined,
+    };
+    mutation.mutate(updated);
+  };
 
   const formatTime = (time: number | string) => {
     let t = Number(time);
@@ -79,101 +106,171 @@ const Profile = () => {
   }
 
   return (
-    <FlatList
-      style={{ backgroundColor: "#E6F0FF" }}
-      data={historyData || []}
-      keyExtractor={(item) => item.scrambleId}
-      contentContainerStyle={{ paddingBottom: 50 }}
-      ListHeaderComponent={
-        <>
-          {/* User Info */}
-          <View style={styles.userInfo}>
-            <Image
-              source={
-                userData?.image
-                  ? { uri: userData.image }
-                  : require("@/assets/images/cubehub-logo.png")
-              }
-              style={userData?.image ? styles.pfpDynamic : styles.pfp}
+    <>
+      <FlatList
+        style={{ backgroundColor: "#E6F0FF" }}
+        data={historyData || []}
+        keyExtractor={(item) => item.scrambleId}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        ListHeaderComponent={
+          <>
+            {/* User Info */}
+            <View style={styles.userInfo}>
+              <Image
+                source={
+                  userData?.image
+                    ? { uri: userData.image }
+                    : require("@/assets/images/cubehub-logo.png")
+                }
+                style={userData?.image ? styles.pfpDynamic : styles.pfp}
+              />
+              <Text style={styles.username}>@{userData?.username}</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <MaterialIcons name="email" size={24} color="gray" />
+                <Text style={{ color: "gray" }}>{userData?.email}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.signOutButton}
+                onPress={handleSignout}
+              >
+                <Text style={styles.signOutButtonText}>Sign out</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Streak */}
+            <LinearGradient
+              colors={["#2563EB", "#7cd4faff"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.streak}
+            >
+              <FontAwesome5 name="fire-alt" size={70} color="orange" />
+              <Text style={styles.days}>15 Days</Text>
+            </LinearGradient>
+
+            {/* Stats */}
+            <View style={styles.stats}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={styles.statsTitle}>3x3 Stats</Text>
+                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                  <FontAwesome5 name="edit" size={24} color="#2563EB" />
+                </TouchableOpacity>
+              </View>
+              <View style={{ flexDirection: "row" }}>
+                <View style={styles.statsBox}>
+                  <Text style={styles.numberText}>{userData?.ao5}</Text>
+                  <Text style={styles.numberTextSmall}>Ao5</Text>
+                </View>
+                <View style={styles.statsBox}>
+                  <Text style={styles.numberText}>{userData?.ao12}</Text>
+                  <Text style={styles.numberTextSmall}>Ao12</Text>
+                </View>
+                <View style={styles.statsBox}>
+                  <Text style={styles.numberText}>{userData?.single}</Text>
+                  <Text style={styles.numberTextSmall}>Single</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Scramble History Title */}
+            <View style={styles.historyContainer}>
+              <Text style={styles.historyTitle}>Scramble History</Text>
+            </View>
+          </>
+        }
+        renderItem={({ item }) => (
+          <View
+            style={[
+              styles.historyCard,
+              { marginHorizontal: 35, marginBottom: 10 },
+            ]}
+          >
+            <Text style={styles.historyDate}>
+              {new Date(item.date).toLocaleDateString()}
+            </Text>
+            <Text style={styles.historyTime}>
+              Time: {formatTime(item.time)}s
+            </Text>
+            <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text
+            style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
+          >
+            No scramble history yet.
+          </Text>
+        }
+      />
+
+      {/* Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Stats</Text>
+            <TextInput
+              placeholder="Ao5"
+              keyboardType="numeric"
+              style={styles.input}
+              value={ao5}
+              onChangeText={setAo5}
             />
-            <Text style={styles.username}>@{userData?.username}</Text>
+            <TextInput
+              placeholder="Ao12"
+              keyboardType="numeric"
+              style={styles.input}
+              value={ao12}
+              onChangeText={setAo12}
+            />
+            <TextInput
+              placeholder="Single"
+              keyboardType="numeric"
+              style={styles.input}
+              value={single}
+              onChangeText={setSingle}
+            />
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 5,
+                justifyContent: "space-around",
+                marginTop: 20,
               }}
             >
-              <MaterialIcons name="email" size={24} color="gray" />
-              <Text style={{ color: "gray" }}>{userData?.email}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.signOutButton}
-              onPress={handleSignout}
-            >
-              <Text style={styles.signOutButtonText}>Sign out</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Streak */}
-          <LinearGradient
-            colors={["#2563EB", "#7cd4faff"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.streak}
-          >
-            <FontAwesome5 name="fire-alt" size={70} color="orange" />
-            <Text style={styles.days}>15 Days</Text>
-          </LinearGradient>
-
-          {/* Stats */}
-          <View style={styles.stats}>
-            <Text style={styles.statsTitle}>3x3 Stats</Text>
-            <View style={{ flexDirection: "row" }}>
-              <View style={styles.statsBox}>
-                <Text style={styles.numberText}>{userData?.ao5}</Text>
-                <Text style={styles.numberTextSmall}>Ao5</Text>
-              </View>
-              <View style={styles.statsBox}>
-                <Text style={styles.numberText}>{userData?.ao12}</Text>
-                <Text style={styles.numberTextSmall}>Ao12</Text>
-              </View>
-              <View style={styles.statsBox}>
-                <Text style={styles.numberText}>{userData?.single}</Text>
-                <Text style={styles.numberTextSmall}>Single</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleUpdateStats}
+              >
+                <Text style={styles.modalButtonText}>Update</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           </View>
-
-          {/* Scramble History Title */}
-          <View style={styles.historyContainer}>
-            <Text style={styles.historyTitle}>Scramble History</Text>
-          </View>
-        </>
-      }
-      renderItem={({ item }) => (
-        <View
-          style={[
-            styles.historyCard,
-            { marginHorizontal: 35, marginBottom: 10 },
-          ]}
-        >
-          <Text style={styles.historyDate}>
-            {new Date(item.date).toLocaleDateString()}
-          </Text>
-          <Text style={styles.historyTime}>Time: {formatTime(item.time)}s</Text>
-          <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
         </View>
-      )}
-      ListEmptyComponent={
-        <Text
-          style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
-        >
-          No scramble history yet.
-        </Text>
-      }
-    />
+      </Modal>
+    </>
   );
 };
 
@@ -258,6 +355,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     alignSelf: "flex-start",
+    marginRight: 12,
   },
   numberText: {
     fontSize: 19,
@@ -346,5 +444,43 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 10,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginVertical: 8,
+  },
+  modalButton: {
+    backgroundColor: "#2563EB",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "700",
   },
 });

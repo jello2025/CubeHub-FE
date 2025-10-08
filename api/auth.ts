@@ -101,6 +101,14 @@ const getUserScrambleHistory = async (userId: string) => {
   return res.data.history;
 };
 
+const updateUserStats = async (
+  userId: string,
+  updatedStats: Partial<{ ao5: number; ao12: number; single: number }>
+) => {
+  const res = await instance.put(`/auth/${userId}`, updatedStats);
+  return res.data;
+};
+
 // 🔹 EXPORT ALL
 export {
   getAllUsers,
@@ -113,4 +121,5 @@ export {
   register,
   submitSolve,
   updateUserById,
+  updateUserStats,
 };
