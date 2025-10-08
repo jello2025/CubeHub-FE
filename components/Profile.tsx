@@ -369,10 +369,10 @@ const Profile = () => {
                   borderRadius: 12,
                 }}
               />
-              <Text style={{ marginTop: 6 }}>{item.description}</Text>
+              {/* <Text style={{ marginTop: 6 }}>{item.description}</Text>
               <Text style={{ color: "#666", fontSize: 12, marginTop: 2 }}>
                 {new Date(item.date).toLocaleDateString()}
-              </Text>
+              </Text> */}
             </TouchableOpacity>
           )
         }
@@ -396,6 +396,14 @@ const Profile = () => {
       >
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalContent, { width: "90%" }]}>
+            {/* Close X */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedPost(null)}
+            >
+              <Text style={styles.closeButtonText}>×</Text>
+            </TouchableOpacity>
+
             <Image
               source={{ uri: selectedPost?.image }}
               style={{ width: "100%", height: 300, borderRadius: 12 }}
@@ -406,12 +414,6 @@ const Profile = () => {
             <Text style={{ color: "#666", marginTop: 4 }}>
               {selectedPost ? new Date(selectedPost.date).toLocaleString() : ""}
             </Text>
-            <TouchableOpacity
-              style={[styles.modalButton, { marginTop: 15 }]}
-              onPress={() => setSelectedPost(null)}
-            >
-              <Text style={styles.modalButtonText}>Close</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -772,6 +774,25 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
     justifyContent: "flex-start",
+    alignItems: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    backgroundColor: "#ccc",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    justifyContent: "center",
     alignItems: "center",
   },
 });
