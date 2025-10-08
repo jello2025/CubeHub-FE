@@ -14,9 +14,10 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { jwtDecode } from "jwt-decode";
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
   Modal,
@@ -40,6 +41,9 @@ interface IPost {
   date: string;
 }
 
+const { width } = Dimensions.get("window");
+const IMAGE_SIZE = (width - 40 - 10) / 2; // 2 images per row with padding
+
 const Profile = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
   const queryClient = useQueryClient();
@@ -53,6 +57,10 @@ const Profile = () => {
   const [postImage, setPostImage] = useState<string | null>(null);
   const [postDescription, setPostDescription] = useState("");
   const [activeTab, setActiveTab] = useState<"history" | "posts">("history");
+  const [selectedPost, setSelectedPost] = useState<IPost | null>(null);
+
+  const historyRef = useRef<FlatList>(null);
+  const postsRef = useRef<FlatList>(null);
 
   const handleSignout = async () => {
     await setIsAuthenticated(false);
@@ -78,12 +86,12 @@ const Profile = () => {
   });
 
   const { data: userPosts, isLoading: postsLoading } = useQuery({
-    queryKey: ["userPosts"],
+    queryKey: ["userPosts", userData?._id], // ← add user ID here
     queryFn: async () => {
       if (!userData?._id) return [];
       return getUserPosts(userData._id);
     },
-    enabled: !!userData,
+    enabled: !!userData?._id,
   });
 
   const mutation = useMutation({
@@ -184,10 +192,13 @@ const Profile = () => {
   const displayData =
     activeTab === "history" ? historyData || [] : userPosts || [];
 
+  const scrollRef = activeTab === "history" ? historyRef : postsRef;
+
   return (
     <>
       <FlatList
-        key={activeTab} // 🔹 force remount when tab changes
+        ref={scrollRef}
+        key={activeTab}
         style={{ backgroundColor: "#E6F0FF" }}
         data={displayData}
         keyExtractor={(item) =>
@@ -346,13 +357,23 @@ const Profile = () => {
               <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
             </View>
           ) : (
-            <View style={styles.postCard}>
+            <TouchableOpacity
+              style={styles.postCard}
+              onPress={() => setSelectedPost(item)}
+            >
               <Image
                 source={{ uri: item.image }}
-                style={{ width: "100%", height: 150, borderRadius: 12 }}
+                style={{
+                  width: IMAGE_SIZE,
+                  height: IMAGE_SIZE,
+                  borderRadius: 12,
+                }}
               />
               <Text style={{ marginTop: 6 }}>{item.description}</Text>
-            </View>
+              <Text style={{ color: "#666", fontSize: 12, marginTop: 2 }}>
+                {new Date(item.date).toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
           )
         }
         ListEmptyComponent={
@@ -366,7 +387,35 @@ const Profile = () => {
         }
       />
 
-      {/* Modals remain unchanged */}
+      {/* Post Modal Popup */}
+      <Modal
+        visible={!!selectedPost}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedPost(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalContent, { width: "90%" }]}>
+            <Image
+              source={{ uri: selectedPost?.image }}
+              style={{ width: "100%", height: 300, borderRadius: 12 }}
+            />
+            <Text style={{ marginTop: 10, fontSize: 16 }}>
+              {selectedPost?.description}
+            </Text>
+            <Text style={{ color: "#666", marginTop: 4 }}>
+              {selectedPost ? new Date(selectedPost.date).toLocaleString() : ""}
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, { marginTop: 15 }]}
+              onPress={() => setSelectedPost(null)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Stats Modal */}
       <Modal
         visible={modalVisible}
@@ -713,7 +762,6 @@ const styles = StyleSheet.create({
   },
   postCard: {
     marginTop: 30,
-    flex: 1,
     margin: 5,
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -723,5 +771,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
+    justifyContent: "flex-start",
+    alignItems: "center",
   },
 });
