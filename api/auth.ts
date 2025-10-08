@@ -117,13 +117,57 @@ const updateUserStats = async (
   return res.data;
 };
 
+export interface IPost {
+  _id: string;
+  image: string;
+  description?: string;
+  date: string;
+  user: IClass; // populated user
+}
+
+// 🔹 Get all posts
+const getAllPosts = async (): Promise<IPost[]> => {
+  const token = await getToken();
+  const res = await instance.get("/posts/getAll", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+// 🔹 Create new post
+interface CreatePostPayload {
+  image: string;
+  description?: string;
+  user: string; // userId
+}
+const createPost = async (postData: {
+  image: string;
+  description?: string;
+  user: string;
+}) => {
+  const res = await instance.post("/posts/", postData);
+  return res.data;
+};
+
+// 🔹 Get posts by a single user
+const getUserPosts = async (userId: string): Promise<IPost[]> => {
+  const token = await getToken();
+  const res = await instance.get(`/posts/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 // 🔹 EXPORT ALL
 export {
+  createPost,
+  getAllPosts,
   getAllUsers,
   getLeaderboard,
   getMyProfile,
   getScramble,
   getUserById,
+  getUserPosts,
   getUserScrambleHistory,
   login,
   register,

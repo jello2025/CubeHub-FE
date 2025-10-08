@@ -1,5 +1,7 @@
 import {
+  createPost,
   getMyProfile,
+  getUserPosts,
   getUserScrambleHistory,
   updateUserStats,
 } from "@/api/auth";
@@ -31,15 +33,26 @@ interface JwtPayload {
   username: string;
 }
 
+interface IPost {
+  _id: string;
+  image: string;
+  description: string;
+  date: string;
+}
+
 const Profile = () => {
   const { setIsAuthenticated } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [postModalVisible, setPostModalVisible] = useState(false);
   const [ao5, setAo5] = useState("");
   const [ao12, setAo12] = useState("");
   const [single, setSingle] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const [postDescription, setPostDescription] = useState("");
+  const [activeTab, setActiveTab] = useState<"history" | "posts">("history");
 
   const handleSignout = async () => {
     await setIsAuthenticated(false);
@@ -47,13 +60,11 @@ const Profile = () => {
     router.replace("/loginPage");
   };
 
-  // Fetch logged-in user profile
   const { data: userData, isFetching: profileLoading } = useQuery({
     queryKey: ["UserProfile"],
     queryFn: getMyProfile,
   });
 
-  // Fetch user scramble history
   const { data: historyData, isLoading: historyLoading } = useQuery({
     queryKey: ["scrambleHistory"],
     queryFn: async () => {
@@ -66,7 +77,15 @@ const Profile = () => {
     enabled: !!userData,
   });
 
-  // Mutation for updating stats or image
+  const { data: userPosts, isLoading: postsLoading } = useQuery({
+    queryKey: ["userPosts"],
+    queryFn: async () => {
+      if (!userData?._id) return [];
+      return getUserPosts(userData._id);
+    },
+    enabled: !!userData,
+  });
+
   const mutation = useMutation({
     mutationKey: ["updateUserStats", userData?._id],
     mutationFn: (
@@ -87,6 +106,28 @@ const Profile = () => {
     },
   });
 
+  const postMutation = useMutation({
+    mutationKey: ["createPost"],
+    mutationFn: () => {
+      if (!postImage) throw new Error("Select an image first");
+      return createPost({
+        image: postImage,
+        description: postDescription,
+        user: userData?._id as string,
+      });
+    },
+    onSuccess: () => {
+      alert("Posted successfully!");
+      setPostImage(null);
+      setPostDescription("");
+      setPostModalVisible(false);
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+    },
+    onError: (err: any) => {
+      alert("Failed to post: " + err.message);
+    },
+  });
+
   const handleUpdateStats = () => {
     const updated = {
       ao5: ao5 ? Number(ao5) : undefined,
@@ -96,7 +137,7 @@ const Profile = () => {
     mutation.mutate(updated);
   };
 
-  const pickImage = async () => {
+  const pickImage = async (forPost = false) => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -113,8 +154,12 @@ const Profile = () => {
 
     if (!result.canceled && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      setUploading(true);
-      mutation.mutate({ image: uri });
+      if (forPost) {
+        setPostImage(uri);
+      } else {
+        setUploading(true);
+        mutation.mutate({ image: uri });
+      }
     }
   };
 
@@ -136,13 +181,20 @@ const Profile = () => {
     );
   }
 
+  const displayData =
+    activeTab === "history" ? historyData || [] : userPosts || [];
+
   return (
     <>
       <FlatList
+        key={activeTab} // 🔹 force remount when tab changes
         style={{ backgroundColor: "#E6F0FF" }}
-        data={historyData || []}
-        keyExtractor={(item) => item.scrambleId}
+        data={displayData}
+        keyExtractor={(item) =>
+          activeTab === "history" ? item.scrambleId : item._id
+        }
         contentContainerStyle={{ paddingBottom: 50 }}
+        numColumns={activeTab === "posts" ? 2 : 1}
         ListHeaderComponent={
           <>
             {/* User Info */}
@@ -157,7 +209,7 @@ const Profile = () => {
                   style={userData?.image ? styles.pfpDynamic : styles.pfp}
                 />
                 <TouchableOpacity
-                  onPress={pickImage}
+                  onPress={() => pickImage(false)}
                   style={{
                     position: "absolute",
                     bottom: 0,
@@ -183,6 +235,14 @@ const Profile = () => {
                 <MaterialIcons name="email" size={24} color="gray" />
                 <Text style={{ color: "gray" }}>{userData?.email}</Text>
               </View>
+
+              <TouchableOpacity
+                style={[styles.signOutButton, { backgroundColor: "#4A90E2" }]}
+                onPress={() => setPostModalVisible(true)}
+              >
+                <FontAwesome5 name="plus" size={20} color="#fff" />
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.signOutButton}
                 onPress={handleSignout}
@@ -232,38 +292,82 @@ const Profile = () => {
               </View>
             </View>
 
-            {/* Scramble History Title */}
-            <View style={styles.historyContainer}>
-              <Text style={styles.historyTitle}>Scramble History</Text>
+            {/* Tab Switcher */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  activeTab === "history" && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab("history")}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === "history" && styles.activeTabText,
+                  ]}
+                >
+                  Scramble History
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  activeTab === "posts" && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab("posts")}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === "posts" && styles.activeTabText,
+                  ]}
+                >
+                  Posts
+                </Text>
+              </TouchableOpacity>
             </View>
           </>
         }
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.historyCard,
-              { marginHorizontal: 35, marginBottom: 10 },
-            ]}
-          >
-            <Text style={styles.historyDate}>
-              {new Date(item.date).toLocaleDateString()}
-            </Text>
-            <Text style={styles.historyTime}>
-              Time: {formatTime(item.time)}s
-            </Text>
-            <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
-          </View>
-        )}
+        renderItem={({ item }) =>
+          activeTab === "history" ? (
+            <View
+              style={[
+                styles.historyCard,
+                { marginHorizontal: 35, marginBottom: 10, marginTop: 30 },
+              ]}
+            >
+              <Text style={styles.historyDate}>
+                {new Date(item.date).toLocaleDateString()}
+              </Text>
+              <Text style={styles.historyTime}>
+                Time: {formatTime(item.time)}s
+              </Text>
+              <Text style={styles.historyRank}>Rank: #{item.rank}</Text>
+            </View>
+          ) : (
+            <View style={styles.postCard}>
+              <Image
+                source={{ uri: item.image }}
+                style={{ width: "100%", height: 150, borderRadius: 12 }}
+              />
+              <Text style={{ marginTop: 6 }}>{item.description}</Text>
+            </View>
+          )
+        }
         ListEmptyComponent={
           <Text
             style={[styles.noHistory, { marginTop: 20, marginHorizontal: 35 }]}
           >
-            No scramble history yet.
+            {activeTab === "history"
+              ? "No scramble history yet."
+              : "No posts yet."}
           </Text>
         }
       />
 
-      {/* Modal */}
+      {/* Modals remain unchanged */}
+      {/* Stats Modal */}
       <Modal
         visible={modalVisible}
         transparent
@@ -310,6 +414,69 @@ const Profile = () => {
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#ccc" }]}
                 onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* New Post Modal */}
+      <Modal
+        visible={postModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPostModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create New Post</Text>
+
+            {postImage ? (
+              <Image
+                source={{ uri: postImage }}
+                style={{ width: "100%", height: 200, borderRadius: 12 }}
+              />
+            ) : (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#E5E5E5",
+                  height: 200,
+                  borderRadius: 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+                onPress={() => pickImage(true)}
+              >
+                <Text>Pick Image</Text>
+              </TouchableOpacity>
+            )}
+
+            <TextInput
+              placeholder="Description"
+              style={styles.input}
+              value={postDescription}
+              onChangeText={setPostDescription}
+            />
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => postMutation.mutate()}
+              >
+                <Text style={styles.modalButtonText}>Post</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#ccc" }]}
+                onPress={() => setPostModalVisible(false)}
               >
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -451,41 +618,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  historyContainer: {
-    marginTop: 20,
-  },
-  historyTitle: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#2563EB",
-    marginBottom: 10,
-    marginLeft: 30,
-  },
-  historyCard: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  historyDate: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  historyTime: {
-    fontSize: 14,
-    color: "#2563EB",
-    marginTop: 4,
-  },
-  historyRank: {
-    fontSize: 14,
-    color: "#888",
-    marginTop: 2,
-  },
   noHistory: {
     fontSize: 16,
     color: "#666",
@@ -529,5 +661,67 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#fff",
     fontWeight: "700",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginHorizontal: 35,
+    backgroundColor: "#E5E5E5",
+    borderRadius: 30,
+    overflow: "hidden",
+    marginTop: 20,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeTab: {
+    backgroundColor: "#2563EB",
+  },
+  tabText: {
+    color: "#555",
+    fontWeight: "600",
+  },
+  activeTabText: {
+    color: "#fff",
+  },
+  historyCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  historyDate: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  historyTime: {
+    fontSize: 14,
+    color: "#2563EB",
+    marginTop: 4,
+  },
+  historyRank: {
+    fontSize: 14,
+    color: "#888",
+    marginTop: 2,
+  },
+  postCard: {
+    marginTop: 30,
+    flex: 1,
+    margin: 5,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
 });
